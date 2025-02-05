@@ -34,3 +34,7 @@ CREATE DATABASE HealthCheck;
 ```sh
 node app.js
 ```
+### Run Test Cases
+```sh
+NODE_ENV=test npm test
+```
