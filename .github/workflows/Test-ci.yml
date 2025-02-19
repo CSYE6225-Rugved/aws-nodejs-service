@@ -45,5 +45,9 @@ jobs:
 
       - name: Run API Tests
         env:
-          DATABASE_URL: "mysql://${{ secrets.MYSQL_USER }}:${{ secrets.MYSQL_PASSWORD }}@localhost:3306/${{ secrets.MYSQL_DATABASE }}"
+          DB_NAME: ${{ secrets.MYSQL_DATABASE }}
+          DB_USER: ${{ secrets.MYSQL_USER }}
+          DB_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
+          DB_HOST: "localhost"
+          DIALECT: "mysql"
         run: NODE_ENV=test npm test
