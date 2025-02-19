@@ -50,6 +50,7 @@ jobs:
           DB_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
           DB_HOST: ${{ secrets.DB_HOST}}
           DB_DIALECT: ${{ secrets.DB_dialect}}
+
         run: |
           echo "Running API Tests..."
-          NODE_ENV: "test" npm test
+          NODE_ENV=test npm test
