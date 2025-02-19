@@ -14,7 +14,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Start MySQL Service
+      - name: Start MySQL Service # Start the servive
         run: |
           sudo systemctl start mysql
           sudo systemctl status mysql || true  # Show MySQL status for debugging
