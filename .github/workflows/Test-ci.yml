@@ -43,11 +43,23 @@ jobs:
           npm ci
           npm install dotenv --save
 
+      - name: Verify Environment Variables
+        run: |
+          echo "Verifying environment variables..."
+          echo "DB_NAME=${{ secrets.MYSQL_DATABASE }}"
+          echo "DB_USER=${{ secrets.MYSQL_USER }}"
+          echo "DB_PASSWORD=${{ secrets.MYSQL_PASSWORD }}"
+          echo "DB_HOST=localhost"
+          echo "DIALECT=mysql"
+
       - name: Run API Tests
         env:
           DB_NAME: ${{ secrets.MYSQL_DATABASE }}
           DB_USER: ${{ secrets.MYSQL_USER }}
           DB_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
           DB_HOST: "localhost"
-          DIALECT: "mysql"
-        run: NODE_ENV=test npm test
+          DB_DIALECT: "mysql"
+          NODE_ENV: "test"
+        run: |
+          echo "Running API Tests..."
+          npm test
