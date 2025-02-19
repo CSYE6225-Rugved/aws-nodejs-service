@@ -14,19 +14,23 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Start MySQL Service # Start the servive
+      - name: Start MySQL Service
         run: |
+          echo "Starting MySQL..."
           sudo systemctl start mysql
           sudo systemctl status mysql || true  # Show MySQL status for debugging
           mysql --version  # Verify MySQL installation
 
-          - name: Set Up MySQL Database and User
-          run: |
-            sudo systemctl restart mysql  # Ensure MySQL service is running
-            mysql --user=${{ secrets.MYSQL_USER }} --password=${{ secrets.MYSQL_PASSWORD }} -e "CREATE DATABASE IF NOT EXISTS ${{ secrets.MYSQL_DATABASE }};"
-            mysql --user=${{ secrets.MYSQL_USER }} --password=${{ secrets.MYSQL_PASSWORD }} -e "GRANT ALL PRIVILEGES ON ${{ secrets.MYSQL_DATABASE }}.* TO '${{ secrets.MYSQL_USER }}'@'localhost' WITH GRANT OPTION;"
-            mysql --user=${{ secrets.MYSQL_USER }} --password=${{ secrets.MYSQL_PASSWORD }} -e "FLUSH PRIVILEGES;"
-        
+      - name: Set Up MySQL Database and User
+        run: |
+          echo "Restarting MySQL..."
+          sudo systemctl restart mysql  # Ensure MySQL service is running
+
+          echo "Creating database and user..."
+          mysql --user=${{ secrets.MYSQL_USER }} --password=${{ secrets.MYSQL_PASSWORD }} -e "CREATE DATABASE IF NOT EXISTS \`${{ secrets.MYSQL_DATABASE }}\`;"
+          mysql --user=${{ secrets.MYSQL_USER }} --password=${{ secrets.MYSQL_PASSWORD }} -e "CREATE USER IF NOT EXISTS '${{ secrets.MYSQL_USER }}'@'%' IDENTIFIED BY '${{ secrets.MYSQL_PASSWORD }}';"
+          mysql --user=${{ secrets.MYSQL_USER }} --password=${{ secrets.MYSQL_PASSWORD }} -e "GRANT ALL PRIVILEGES ON \`${{ secrets.MYSQL_DATABASE }}\`.* TO '${{ secrets.MYSQL_USER }}'@'%' WITH GRANT OPTION;"
+          mysql --user=${{ secrets.MYSQL_USER }} --password=${{ secrets.MYSQL_PASSWORD }} -e "FLUSH PRIVILEGES;"
 
       - name: Set Up Node.js
         uses: actions/setup-node@v4
@@ -38,4 +42,6 @@ jobs:
         run: npm ci
 
       - name: Run API Tests
+        env:
+          DATABASE_URL: "mysql://${{ secrets.MYSQL_USER }}:${{ secrets.MYSQL_PASSWORD }}@localhost:3306/${{ secrets.MYSQL_DATABASE }}"
         run: NODE_ENV=test npm test
