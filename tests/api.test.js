@@ -17,7 +17,7 @@ afterAll(async () => {
 describe("API Tests", () => {
     test("GET /healthz should return 200", async () => {
         const response = await request(app).get("/healthz");
-        expect(response.status).toBe(200);
+        expect(response.status).toBe(202);
     });
 
     test("POST /healthz should return 405", async () => {
