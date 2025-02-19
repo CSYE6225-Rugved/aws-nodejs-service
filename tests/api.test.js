@@ -14,6 +14,7 @@ afterAll(async () => {
     server.close();
 });
 
+
 describe("API Tests", () => {
     test("GET /healthz should return 200", async () => {
         const response = await request(app).get("/healthz");
