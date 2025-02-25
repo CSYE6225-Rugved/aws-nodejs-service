@@ -5,7 +5,7 @@
 
 ## Setup
 
-### 1. Clone the Repository
+### 1. Clodfne the Repository
 ```sh
 git clone git@github.com:CSYE6225-Rugved/webapp.git
 cd webapp
