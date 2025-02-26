@@ -54,12 +54,12 @@ source "amazon-ebs" "ubuntu" {
 }
 
 source "googlecompute" "gcp_ubuntu" {
-  project_id       = var.gcp_project_id
-  image_name       = "custom-ubuntu-gcp-${formatdate("20060102-150405", timestamp())}-${uuidv4()}"
-  source_image     = "ubuntu-2204-jammy-v20250219"
-  zone             = var.gcp_zone
-  machine_type     = "e2-medium"
-  ssh_username     = var.ssh_username
+  project_id   = var.gcp_project_id
+  image_name   = "rugved-${formatdate("20060102-150405", timestamp())}-${uuidv4()}"
+  source_image = "ubuntu-2204-jammy-v20250219"
+  zone         = var.gcp_zone
+  machine_type = "e2-medium"
+  ssh_username = var.ssh_username
 
   tags = ["packer-image"]
 }
