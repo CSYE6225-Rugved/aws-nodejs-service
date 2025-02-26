@@ -27,6 +27,10 @@ jobs:
         id: fmt
         run: packer fmt -check packer_image/
 
+      - name: Make script executable
+        id: make_executable
+        run: chmod +x packer_image/mysql_packer.sh
+
       - name: Validate Packer Template
         id: validate
         run:  packer validate packer_image/
