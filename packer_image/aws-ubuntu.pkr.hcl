@@ -42,14 +42,14 @@ source "amazon-ebs" "ubuntu" {
   region        = var.aws_region
 
   source_ami_filter {
-    filters = {
-      name                = "ubuntu/images/*ubuntu-jammy-24.04-amd64-server-*"
-      root-device-type    = "ebs"
-      virtualization-type = "hvm"
-    }
-    most_recent = true
-    owners      = ["099720109477"]
+  filters = {
+    name                = "ubuntu/images/*ubuntu-jammy-22.04-amd64-server-*"
+    root-device-type    = "ebs"
+    virtualization-type = "hvm"
   }
+  most_recent = true
+  owners      = ["099720109477"]
+}
 
   ssh_username = var.ssh_username
 }
@@ -57,7 +57,7 @@ source "amazon-ebs" "ubuntu" {
 source "googlecompute" "gcp_ubuntu" {
   project_id   = var.gcp_project_id
   image_name   = "rugved-${formatdate("20060102-150405", timestamp())}-${uuidv4()}"
-  source_image = "ubuntu-os-cloud/ubuntu-2204-lts"
+  source_image = "projects/ubuntu-os-cloud/global/images/ubuntu-2204-lts"
   zone         = var.gcp_zone
   machine_type = "e2-medium"
   ssh_username = var.ssh_username
