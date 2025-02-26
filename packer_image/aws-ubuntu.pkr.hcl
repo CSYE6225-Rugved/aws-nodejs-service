@@ -37,7 +37,7 @@ packer {
 }
 
 source "amazon-ebs" "ubuntu" {
-  ami_name      = "rugved-${formatdate("20060102-150405", timestamp())}"
+  ami_name = "rugved-${formatdate("20060102-150405", timestamp())}-${uuidv4()}"
   instance_type = var.aws_instance_type
   region        = var.aws_region
 
@@ -56,8 +56,8 @@ source "amazon-ebs" "ubuntu" {
 
 source "googlecompute" "gcp_ubuntu" {
   project_id   = var.gcp_project_id
-  image_name   = "custom-ubuntu-gcp-${formatdate("20060102-150405", timestamp())}"
-  source_image = "ubuntu-2404-lts"
+  image_name   = "rugved-${formatdate("20060102-150405", timestamp())}-${uuidv4()}"
+  source_image = "ubuntu-os-cloud/ubuntu-2204-lts"
   zone         = var.gcp_zone
   machine_type = "e2-medium"
   ssh_username = var.ssh_username
