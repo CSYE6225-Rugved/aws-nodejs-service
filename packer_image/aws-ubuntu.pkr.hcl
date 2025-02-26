@@ -57,7 +57,7 @@ source "amazon-ebs" "ubuntu" {
 source "googlecompute" "gcp_ubuntu" {
   project_id   = var.gcp_project_id
   image_name   = "rugved-${formatdate("20060102-150405", timestamp())}-${uuidv4()}"
-  source_image = "projects/ubuntu-os-cloud/global/images/ubuntu-2204-lts"
+  source_image = "ubuntu-2204-jammy-v20250219"
   zone         = var.gcp_zone
   machine_type = "e2-medium"
   ssh_username = var.ssh_username
