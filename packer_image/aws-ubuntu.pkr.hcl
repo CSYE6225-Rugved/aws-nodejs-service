@@ -73,6 +73,6 @@ build {
   ]
 
   provisioner "shell" {
-    script = "./mysql_packer.sh"
+    script = "packer_image/mysql_packer.sh"
   }
 }
