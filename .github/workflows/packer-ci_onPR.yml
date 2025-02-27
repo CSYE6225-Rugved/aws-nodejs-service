@@ -19,10 +19,14 @@ jobs:
         with:
           version: "latest"
 
+      - name: Initialize Packer
+        id: init
+        run: packer init packer_image/
+
       - name: Check Packer Formatting
         id: fmt
-        run: packer fmt -check .
+        run: packer fmt -check packer_image/
 
       - name: Validate Packer Template
         id: validate
-        run:  packer validate .
+        run:  packer validate packer_image/

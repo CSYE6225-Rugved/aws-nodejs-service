@@ -35,9 +35,9 @@ sudo systemctl enable mysql || echo "⚠️ Warning: MySQL could not be enabled,
 
 echo "Verifying MySQL service status..."
 if systemctl is-active --quiet mysql; then
-    echo "✅ MySQL is running successfully."
+    echo "MySQL is running successfully."
 else
-    echo "❌ MySQL installation failed."
+    echo "MySQL installation failed."
     journalctl -u mysql --no-pager | tail -n 50
     exit 1
 fi
@@ -52,4 +52,4 @@ sudo mysql -e "CREATE USER IF NOT EXISTS 'rugved'@'localhost' IDENTIFIED BY 'adm
 sudo mysql -e "GRANT ALL PRIVILEGES ON HealthCheck.* TO 'rugved'@'localhost';"
 sudo mysql -e "FLUSH PRIVILEGES;"
 
-echo "🎉 MySQL installation completed successfully!"
+echo "MySQL installation completed successfully!"
