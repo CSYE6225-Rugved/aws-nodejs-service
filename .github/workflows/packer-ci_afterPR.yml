@@ -42,17 +42,6 @@ jobs:
           npm ci
           npm install dotenv --save
 
-      - name: Create .env file
-        run: |
-          echo "Creating .env file..."
-          cat <<EOF > .env
-          DB_NAME=${{ secrets.MYSQL_DATABASE }}
-          DB_USER=${{ secrets.MYSQL_USER }}
-          DB_PASSWORD=${{ secrets.MYSQL_PASSWORD }}
-          DB_HOST=${{ secrets.DB_HOST }}
-          DB_DIALECT=${{ secrets.DB_DIALECT }}
-          EOF
-
       - name: Run Integration Tests
         env:
           DB_NAME: ${{ secrets.MYSQL_DATABASE }}
