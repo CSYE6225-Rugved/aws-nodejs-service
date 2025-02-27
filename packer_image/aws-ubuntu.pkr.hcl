@@ -85,7 +85,7 @@ build {
     destination = "/tmp/webapp.zip"
     generated   = true
   }
-   provisioner "shell" {
+  provisioner "shell" {
     script = "packer_image/mysql_packer.sh"
   }
 }
