@@ -72,38 +72,25 @@ build {
     "source.googlecompute.gcp_ubuntu"
   ]
 
-  provisioner "shell" {
-    inline = [
-      "sudo mkdir -p /tmp/packer",
-      "sudo chmod 777 /tmp/packer"
-    ]
-  }
-
+  // First copy the service file
   provisioner "file" {
     source      = "service/webapp.service"
-    destination = "/tmp/packer/webapp.service"
+    destination = "/tmp/webapp.service"
   }
 
+  // Copy .env file from /tmp
   provisioner "file" {
-    source      = "build/.env"
-    destination = "/tmp/packer/.env"
+    source      = "/tmp/packer/.env"
+    destination = "/tmp/.env"
   }
 
+  // Copy webapp.zip from /tmp
   provisioner "file" {
-    source      = "build/webapp.zip"
-    destination = "/tmp/packer/webapp.zip"
+    source      = "/tmp/packer/webapp.zip"
+    destination = "/tmp/webapp.zip"
   }
 
-  provisioner "shell" {
-    inline = [
-      "ls -la /tmp/packer",
-      "if [ ! -f /tmp/packer/webapp.zip ] || [ ! -f /tmp/packer/.env ] || [ ! -f /tmp/packer/webapp.service ]; then",
-      "  echo 'Required files missing'",
-      "  exit 1",
-      "fi"
-    ]
-  }
-
+  // Run the setup script
   provisioner "shell" {
     script = "packer_image/mysql_packer.sh"
   }

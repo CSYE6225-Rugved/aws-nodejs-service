@@ -63,7 +63,7 @@ jobs:
         run: |
           cp -r * build/ 2>/dev/null || true
           cd build
-          zip -r webapp.zip . -x "node_modules/*" "build/*"
+          zip -r webapp.zip . -x "node_modules/*" ".git/*" "build/*"
 
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
@@ -91,28 +91,13 @@ jobs:
 
       - name: Prepare Files for Packer
         run: |
-            # Create build directory if it doesn't exist
-            mkdir -p build
-            
-            # Ensure files exist
-            if [ ! -f "build/webapp.zip" ] || [ ! -f "build/.env" ] || [ ! -f "service/webapp.service" ]; then
-              echo "Required files missing"
-              ls -la build/
-              ls -la service/
-              exit 1
-            fi
-  
-            # Make files available for Packer
-            cp build/webapp.zip .
-            cp build/.env .
-            cp service/webapp.service .
-  
-            # Set correct permissions
-            chmod 644 webapp.zip .env webapp.service
-            
-            # Verify files
-            echo "Verifying files:"
-            ls -la webapp.zip .env webapp.service
+          sudo mkdir -p /tmp/packer
+          sudo cp build/webapp.zip /tmp/packer/
+          sudo cp build/.env /tmp/packer/
+          sudo cp service/webapp.service /tmp/packer/
+          sudo chmod 644 /tmp/packer/*
+          echo "Verifying files in /tmp/packer:"
+          ls -la /tmp/packer/
 
       - name: Install Packer
         uses: hashicorp/setup-packer@v2
