@@ -117,9 +117,17 @@ jobs:
     needs: deploy
     runs-on: ubuntu-latest
     steps:
+      - name: Setup SSH Key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ needs.deploy.outputs.INSTANCE_IP }} >> ~/.ssh/known_hosts
+
       - name: SSH into Instance and Configure
         run: |
-          ssh -i ${{ secrets.SSH_PRIVATE_KEY }} user@${{ secrets.INSTANCE_IP }} << EOF
+          ssh -i ~/.ssh/id_rsa ubuntu@${{ needs.deploy.outputs.INSTANCE_IP }} << EOF
+          echo "Connected to instance successfully!"
           sudo useradd -r -s /usr/sbin/nologin -g csye6225 csye6225
           sudo mkdir -p /opt/webapp
           sudo chown -R csye6225:csye6225 /opt/webapp
