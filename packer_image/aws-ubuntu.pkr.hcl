@@ -72,19 +72,29 @@ build {
     "source.googlecompute.gcp_ubuntu"
   ]
 
-  # Copy files to the instance
+  # First, create the temporary directory
+  provisioner "shell" {
+    inline = [
+      "sudo mkdir -p /tmp/packer",
+      "sudo chmod 777 /tmp/packer"
+    ]
+  }
+
+  # Copy the service file
   provisioner "file" {
-    source      = "service/webapp.service"
+    source      = "/tmp/packer/webapp.service"
     destination = "/tmp/webapp.service"
   }
 
+  # Copy the environment file
   provisioner "file" {
-    source      = "build/.env"
+    source      = "/tmp/packer/.env"
     destination = "/tmp/.env"
   }
 
+  # Copy the webapp archive
   provisioner "file" {
-    source      = "build/webapp.zip"
+    source      = "/tmp/packer/webapp.zip"
     destination = "/tmp/webapp.zip"
   }
 
