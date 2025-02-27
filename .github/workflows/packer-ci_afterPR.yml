@@ -7,23 +7,29 @@ on:
 
 jobs:
   test:
-    name: Run API Tests with MySQL
+    name: Run Integration Tests with MySQL
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
       - name: Start MySQL Service
         run: |
+          echo "Starting MySQL..."
           sudo systemctl start mysql
+          sudo systemctl status mysql || true
           mysql --version
 
       - name: Set Up MySQL Database and User
         run: |
+          echo "Restarting MySQL..."
+          sudo systemctl restart mysql
+
+          echo "Creating database and user..."
           mysql --user=${{ secrets.MYSQL_USER }} --password=${{ secrets.MYSQL_PASSWORD }} -e "CREATE DATABASE IF NOT EXISTS \`${{ secrets.MYSQL_DATABASE }}\`;"
           mysql --user=${{ secrets.MYSQL_USER }} --password=${{ secrets.MYSQL_PASSWORD }} -e "CREATE USER '${{ secrets.MYSQL_USER }}'@'%' IDENTIFIED BY '${{ secrets.MYSQL_PASSWORD }}';"
           mysql --user=${{ secrets.MYSQL_USER }} --password=${{ secrets.MYSQL_PASSWORD }} -e "GRANT ALL PRIVILEGES ON \`${{ secrets.MYSQL_DATABASE }}\`.* TO '${{ secrets.MYSQL_USER }}'@'%';"
+          mysql --user=${{ secrets.MYSQL_USER }} --password=${{ secrets.MYSQL_PASSWORD }} -e "FLUSH PRIVILEGES;"
 
       - name: Set Up Node.js
         uses: actions/setup-node@v4
@@ -32,20 +38,30 @@ jobs:
           cache: "npm"
 
       - name: Install Dependencies
-        run: npm ci
+        run: |
+          npm ci
+          npm install dotenv --save
 
-      - name: Run API Tests
+      - name: Create .env file
+        run: |
+          echo "DB_NAME=${{ secrets.MYSQL_DATABASE }}" > .env
+          echo "DB_USER=${{ secrets.MYSQL_USER }}" >> .env
+          echo "DB_PASSWORD=${{ secrets.MYSQL_PASSWORD }}" >> .env
+          echo "DB_HOST=${{ secrets.DB_HOST }}" >> .env
+          echo "DB_DIALECT=${{ secrets.DB_DIALECT }}" >> .env
+
+      - name: Run Integration Tests
         env:
           DB_NAME: ${{ secrets.MYSQL_DATABASE }}
           DB_USER: ${{ secrets.MYSQL_USER }}
           DB_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
           DB_HOST: ${{ secrets.DB_HOST }}
           DB_DIALECT: ${{ secrets.DB_DIALECT }}
-        run: npm test
+        run: NODE_ENV=test npm test
 
   build:
     name: Build Application Artifact
-    needs: test
+    needs: test  # Ensure tests pass before building
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -66,12 +82,9 @@ jobs:
           path: build/webapp.zip
 
   packer-build:
-    name: Build Custom Image
-    needs: build
+    name: Build Custom Image for AWS & GCP
+    needs: [test, build]  # Ensure both tests and build pass before proceeding
     runs-on: ubuntu-latest
-    outputs:
-      INSTANCE_IP: ${{ steps.get-instance-ip.outputs.INSTANCE_IP }}
-
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -97,44 +110,25 @@ jobs:
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
-      - name: Build Image with Packer
+      - name: Build Custom Image with Packer
         run: |
+          set -e  # Stop script if any command fails
           packer init packer_image/
           packer validate packer_image/
           packer build packer_image/
 
-      - name: Get Instance Public IP (AWS)
-        id: get-instance-ip
+      - name: Ensure Application Setup in Custom Image
         run: |
-          INSTANCE_IP=$(aws ec2 describe-instances \
-            --filters "Name=tag:Name,Values=webapp-instance" "Name=instance-state-name,Values=running" \
-            --query "Reservations[*].Instances[*].PublicIpAddress" \
-            --output text)
-          echo "INSTANCE_IP=$INSTANCE_IP" >> $GITHUB_ENV
-          echo "::set-output name=INSTANCE_IP::$INSTANCE_IP"
+          set -e
+          echo "Setting up the application in the custom image..."
 
-  configure-instance:
-    name: Configure Instance
-    needs: packer-build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Setup SSH Key
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ needs.packer-build.outputs.INSTANCE_IP }} >> ~/.ssh/known_hosts
-
-      - name: SSH and Configure
-        run: |
-          ssh -i ~/.ssh/id_rsa ubuntu@${{ needs.packer-build.outputs.INSTANCE_IP }} << 'EOF'
           sudo useradd -r -s /usr/sbin/nologin -g csye6225 csye6225
           sudo mkdir -p /opt/webapp
           sudo chown -R csye6225:csye6225 /opt/webapp
-          sudo cp webapp.zip /opt/webapp/
+          sudo cp build/webapp.zip /opt/webapp/
           sudo unzip /opt/webapp/webapp.zip -d /opt/webapp/
+
+          echo "Configuring systemd service..."
           sudo cp service/webapp.service /etc/systemd/system/
           sudo systemctl daemon-reload
           sudo systemctl enable webapp
-          sudo systemctl start webapp
-          EOF
