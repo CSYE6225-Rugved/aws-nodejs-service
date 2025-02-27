@@ -77,7 +77,6 @@ build {
 
   provisioner "shell" {
     inline = [
-      "sudo groupadd csye6225 || true",
       "sudo useradd -r -s /usr/sbin/nologin -g csye6225 csye6225",
       "sudo mkdir -p /opt/webapp",
       "sudo chown -R csye6225:csye6225 /opt/webapp",
