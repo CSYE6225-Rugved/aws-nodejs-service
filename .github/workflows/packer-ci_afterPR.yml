@@ -45,7 +45,6 @@ jobs:
 
       - name: Create .env file
         run: |
-          echo "Creating .env file..."
           echo "DB_NAME=${{ secrets.MYSQL_DATABASE }}" > .env
           echo "DB_USER=${{ secrets.MYSQL_USER }}" >> .env
           echo "DB_PASSWORD=${{ secrets.MYSQL_PASSWORD }}" >> .env
@@ -70,20 +69,18 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install Dependencies
-        run: |
-          npm install
-          npm install dotenv --save
-      - name: Create .env file
-        run: |
-          echo "DB_NAME=${{ secrets.MYSQL_DATABASE }}" > .env
-          echo "DB_USER=${{ secrets.MYSQL_USER }}" >> .env
-          echo "DB_PASSWORD=${{ secrets.MYSQL_PASSWORD }}" >> .env
-          echo "DB_HOST=${{ secrets.DB_HOST }}" >> .env
-          echo "DB_DIALECT=${{ secrets.DB_DIALECT }}" >> .env
+        run: npm install
 
       - name: Build Artifact
-        run: 
-          zip -r webapp.zip .
+        run: |
+          mkdir -p build
+          zip -r build/webapp.zip . -x "node_modules/*"
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: webapp-artifact
+          path: build/webapp.zip
 
   packer-build:
     name: Build Custom Image for AWS & GCP
@@ -110,24 +107,27 @@ jobs:
 
       - name: Build Custom Image with Packer
         run: |
-          set -e
+          set -e  # Stop execution if any command fails
           packer init packer_image/
           packer validate packer_image/
           packer build packer_image/
 
-      - name: share image
+      - name: Ensure Application Setup in Custom Image
         run: |
-          AMI_ID=$(aws ec2 describe-images \
-          --owners self \
-          --filters "Name=state,Values=available" \
-            --query "Images | sort_by(@, &CreationDate)[-1].ImageId" \
-                --output text)
-  
-            if [ -n "$AMI_ID" ]; then
-              echo "Sharing AMI $AMI_ID with AWS DEMO account..."
-              aws ec2 modify-image-attribute --image-id "$AMI_ID" \
-                --launch-permission "{\"Add\": [{\"UserId\": \"${{ secrets.AWS_DEMO_ACCOUNT_ID }}\"}]}"
-            else
-              echo "AMI not found, exiting."
-              exit 1
-            fi
+          set -e  # Stop on any error
+          echo "Setting up the application in the custom image..."
+
+          echo "Creating group and user..."
+          sudo groupadd -r csye6225 || true  # Ensure group exists
+          sudo useradd -r -s /usr/sbin/nologin -g csye6225 csye6225
+
+          echo "Setting up application directory..."
+          sudo mkdir -p /opt/webapp
+          sudo chown -R csye6225:csye6225 /opt/webapp
+          sudo cp build/webapp.zip /opt/webapp/
+          sudo unzip /opt/webapp/webapp.zip -d /opt/webapp/
+
+          echo "Configuring systemd service..."
+          sudo cp service/webapp.service /etc/systemd/system/
+          sudo systemctl daemon-reload
+          sudo systemctl enable webapp
