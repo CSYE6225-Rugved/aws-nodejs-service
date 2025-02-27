@@ -62,7 +62,7 @@ jobs:
 
   build:
     name: Build Application Artifact
-    needs: test 
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -137,3 +137,40 @@ jobs:
           sudo cp service/webapp.service /etc/systemd/system/
           sudo systemctl daemon-reload
           sudo systemctl enable webapp
+
+      - name: share image in aws
+        run: |
+          AMI_ID=$(aws ec2 describe-images \
+            --owners self \
+            --filters "Name=state,Values=available" \
+            --query "Images | sort_by(@, &CreationDate)[-1].ImageId" \
+            --output text)
+
+          if [ -n "$AMI_ID" ]; then
+            echo "Sharing AMI $AMI_ID with AWS DEMO account..."
+            aws ec2 modify-image-attribute --image-id "$AMI_ID" \
+              --launch-permission "{\"Add\": [{\"UserId\": \"${{ secrets.AWS_DEMO_ACCOUNT_ID }}\"}]}"
+          else
+            echo "AMI not found, exiting."
+            exit 1
+          fi
+
+      - name: Share Image
+        run: |
+          PROJECT_ID=$(gcloud config get-value project)
+          IMAGE_NAME=$(gcloud compute images list \
+            --project="$PROJECT_ID" \
+            --sort-by="~creationTimestamp" \
+            --format="value(NAME)" \
+            --limit=1)
+
+          if [ -n "$IMAGE_NAME" ]; then
+            echo "Sharing image $IMAGE_NAME with GCP DEMO account..."
+            gcloud compute images add-iam-policy-binding "$IMAGE_NAME" \
+              --project="$PROJECT_ID" \
+              --member="user:${{ secrets.GCP_DEMO_ACCOUNT_EMAIL }}" \
+              --role="roles/compute.imageUser"
+          else
+            echo "Image not found, exiting."
+            exit 1
+          fi
