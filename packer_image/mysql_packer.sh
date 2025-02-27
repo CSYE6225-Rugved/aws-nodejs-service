@@ -62,8 +62,8 @@ echo "MySQL installation completed successfully!"
 
 echo "Setting up the application in the custom image..."
 echo "Creating group and user..."
-sudo apt-get install -y npm
-sudo apt-get install -y nodejs
+sudo install npm -y
+sudo install nodejs -y
 sudo groupadd -r csye6225 || true
 sudo useradd -r -s /usr/sbin/nologin -g csye6225 csye6225
 echo "Setting up application directory..."
@@ -72,7 +72,6 @@ sudo chown -R csye6225:csye6225 /opt/webapp
 sudo cp /tmp/webapp.zip /opt/webapp/
 sudo install unzip -y
 sudo unzip /opt/webapp/webapp.zip -d /opt/webapp/
-sudo cp /tmp/.env /opt/webapp/.env
 echo "Configuring systemd service..."
 sudo cp service/webapp.service /etc/systemd/system/
 sudo systemctl daemon-reload

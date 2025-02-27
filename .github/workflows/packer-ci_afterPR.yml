@@ -2,18 +2,34 @@ name: Deploy WebApp to AWS and GCP
 
 on:
   pull_request:
-    types: [closed]
     branches:
       - main
 
 jobs:
   test:
-    if: github.event.pull_request.merged == true
     name: Run Integration Tests with MySQL
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+
+      - name: Start MySQL Service
+        run: |
+          echo "Starting MySQL..."
+          sudo systemctl start mysql
+          sudo systemctl status mysql || true
+          mysql --version
+
+      - name: Set Up MySQL Database and User
+        run: |
+          echo "Restarting MySQL..."
+          sudo systemctl restart mysql
+
+          echo "Creating database and user..."
+          mysql --user=${{ secrets.MYSQL_USER }} --password=${{ secrets.MYSQL_PASSWORD }} -e "CREATE DATABASE IF NOT EXISTS \`${{ secrets.MYSQL_DATABASE }}\`;"
+          mysql --user=${{ secrets.MYSQL_USER }} --password=${{ secrets.MYSQL_PASSWORD }} -e "CREATE USER '${{ secrets.MYSQL_USER }}'@'%' IDENTIFIED BY '${{ secrets.MYSQL_PASSWORD }}';"
+          mysql --user=${{ secrets.MYSQL_USER }} --password=${{ secrets.MYSQL_PASSWORD }} -e "GRANT ALL PRIVILEGES ON \`${{ secrets.MYSQL_DATABASE }}\`.* TO '${{ secrets.MYSQL_USER }}'@'%';"
+          mysql --user=${{ secrets.MYSQL_USER }} --password=${{ secrets.MYSQL_PASSWORD }} -e "FLUSH PRIVILEGES;"
 
       - name: Set Up Node.js
         uses: actions/setup-node@v4
@@ -22,9 +38,20 @@ jobs:
           cache: "npm"
 
       - name: Install Dependencies
-        run: npm ci
+        run: |
+          npm ci
+          npm install dotenv --save
 
-      - name: Run Tests
+      - name: Create .env file
+        run: |
+          echo "Creating .env file..."
+          echo "DB_NAME=${{ secrets.MYSQL_DATABASE }}" > .env
+          echo "DB_USER=${{ secrets.MYSQL_USER }}" >> .env
+          echo "DB_PASSWORD=${{ secrets.MYSQL_PASSWORD }}" >> .env
+          echo "DB_HOST=${{ secrets.DB_HOST }}" >> .env
+          echo "DB_DIALECT=${{ secrets.DB_DIALECT }}" >> .env
+
+      - name: Run Integration Tests
         env:
           DB_NAME: ${{ secrets.MYSQL_DATABASE }}
           DB_USER: ${{ secrets.MYSQL_USER }}
@@ -34,48 +61,30 @@ jobs:
         run: NODE_ENV=test npm test
 
   build:
-    if: github.event.pull_request.merged == true
     name: Build Application Artifact
-    needs: test
+    needs: test 
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
       - name: Install Dependencies
-        run: npm ci
-
-      - name: Create Build Directory
-        run: mkdir -p build
-
-      - name: Create .env File
         run: |
-          echo "Creating .env file..."
-          cat << EOF > build/.env
-          DB_NAME=${{ secrets.MYSQL_DATABASE }}
-          DB_USER=${{ secrets.MYSQL_USER }}
-          DB_PASSWORD=${{ secrets.MYSQL_PASSWORD }}
-          DB_HOST=${{ secrets.DB_HOST }}
-          DB_DIALECT=${{ secrets.DB_DIALECT }}
-          EOF
+          npm install
+          npm install dotenv --save
+      - name: Create .env file
+        run: |
+          echo "DB_NAME=${{ secrets.MYSQL_DATABASE }}" > .env
+          echo "DB_USER=${{ secrets.MYSQL_USER }}" >> .env
+          echo "DB_PASSWORD=${{ secrets.MYSQL_PASSWORD }}" >> .env
+          echo "DB_HOST=${{ secrets.DB_HOST }}" >> .env
+          echo "DB_DIALECT=${{ secrets.DB_DIALECT }}" >> .env
 
       - name: Build Artifact
-        run: |
-          cp -r * build/ 2>/dev/null || true
-          cd build
-          zip -r webapp.zip . -x "node_modules/*" ".git/*" "build/*"
-
-      - name: Upload Build Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: webapp-artifact
-          path: |
-            build/webapp.zip
-            build/.env
-            service/webapp.service
+        run: 
+          zip -r webapp.zip .
 
   packer-build:
-    if: github.event.pull_request.merged == true
     name: Build Custom Image for AWS & GCP
     needs: [test, build]
     runs-on: ubuntu-latest
@@ -83,56 +92,41 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Download Build Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: webapp-artifact
-          path: build
-
-      - name: Prepare Files for Packer
-        run: |
-          sudo mkdir -p /tmp/packer
-          sudo cp build/webapp.zip /tmp/packer/
-          sudo cp build/.env /tmp/packer/
-          sudo cp service/webapp.service /tmp/packer/
-          sudo chmod 644 /tmp/packer/*
-          echo "Verifying files in /tmp/packer:"
-          ls -la /tmp/packer/
-
       - name: Install Packer
         uses: hashicorp/setup-packer@v2
 
-      - name: Configure AWS Credentials
+      - name: Set up AWS CLI
         uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Configure GCP Credentials
+      - name: Set up GCP CLI
         uses: google-github-actions/auth@v1
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
-      - name: Build Custom Image
+      - name: Build Custom Image with Packer
         run: |
+          set -e
           packer init packer_image/
           packer validate packer_image/
-          PACKER_LOG=1 packer build packer_image/
+          packer build packer_image/
 
-      - name: Share AMI
+      - name: share image
         run: |
           AMI_ID=$(aws ec2 describe-images \
-            --owners self \
-            --filters "Name=state,Values=available" \
+          --owners self \
+          --filters "Name=state,Values=available" \
             --query "Images | sort_by(@, &CreationDate)[-1].ImageId" \
-            --output text)
-
-          if [ -n "$AMI_ID" ]; then
-            aws ec2 modify-image-attribute \
-              --image-id "$AMI_ID" \
-              --launch-permission "{\"Add\": [{\"UserId\": \"${{ secrets.AWS_DEMO_ACCOUNT_ID }}\"}]}"
-          else
-            echo "No AMI found"
-            exit 1
-          fi
+                --output text)
+  
+            if [ -n "$AMI_ID" ]; then
+              echo "Sharing AMI $AMI_ID with AWS DEMO account..."
+              aws ec2 modify-image-attribute --image-id "$AMI_ID" \
+                --launch-permission "{\"Add\": [{\"UserId\": \"${{ secrets.AWS_DEMO_ACCOUNT_ID }}\"}]}"
+            else
+              echo "AMI not found, exiting."
+              exit 1
+            fi
