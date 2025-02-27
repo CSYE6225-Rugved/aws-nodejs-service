@@ -100,15 +100,14 @@ jobs:
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
-      - name: Create .env file
+      - name: Export Environment Variables
         run: |
-          echo "Creating .env file..."
-          > .env
-          echo "DB_NAME=${{ secrets.MYSQL_DATABASE }}" >> .env
-          echo "DB_USER=${{ secrets.MYSQL_USER }}" >> .env
-          echo "DB_PASSWORD=${{ secrets.MYSQL_PASSWORD }}" >> .env
-          echo "DB_HOST=${{ secrets.DB_HOST }}" >> .env
-          echo "DB_DIALECT=${{ secrets.DB_DIALECT }}" >> .env
+            echo "Exporting environment variables..."
+            echo "DB_NAME=${{ secrets.MYSQL_DATABASE }}" >> $GITHUB_ENV
+            echo "DB_USER=${{ secrets.MYSQL_USER }}" >> $GITHUB_ENV
+            echo "DB_PASSWORD=${{ secrets.MYSQL_PASSWORD }}" >> $GITHUB_ENV
+            echo "DB_HOST=${{ secrets.DB_HOST }}" >> $GITHUB_ENV
+            echo "DB_DIALECT=${{ secrets.DB_DIALECT }}" >> $GITHUB_ENV
       - name: Build Custom Image with Packer
         run: |
           set -e
