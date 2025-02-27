@@ -1,16 +1,3 @@
-packer {
-  required_plugins {
-    amazon = {
-      version = ">= 1.2.8"
-      source  = "github.com/hashicorp/amazon"
-    }
-    googlecompute = {
-      version = ">= 1.0.0"
-      source  = "github.com/hashicorp/googlecompute"
-    }
-  }
-}
-
 variable "aws_region" {
   type    = string
   default = "us-east-1"
@@ -34,6 +21,19 @@ variable "gcp_project_id" {
 variable "gcp_zone" {
   type    = string
   default = "us-central1-a"
+}
+
+packer {
+  required_plugins {
+    amazon = {
+      version = ">= 1.2.8"
+      source  = "github.com/hashicorp/amazon"
+    }
+    googlecompute = {
+      version = ">= 1.0.0"
+      source  = "github.com/hashicorp/googlecompute"
+    }
+  }
 }
 
 source "amazon-ebs" "ubuntu" {
@@ -60,8 +60,10 @@ source "googlecompute" "gcp_ubuntu" {
   zone         = var.gcp_zone
   machine_type = "e2-medium"
   ssh_username = var.ssh_username
-  tags         = ["packer-image"]
+
+  tags = ["packer-image"]
 }
+
 
 build {
   name = "learn-packer"
@@ -69,22 +71,20 @@ build {
     "source.amazon-ebs.ubuntu",
     "source.googlecompute.gcp_ubuntu"
   ]
-
   provisioner "file" {
-    source      = "/tmp/packer/webapp.service"
+    source      = "service/webapp.service"
     destination = "/tmp/webapp.service"
   }
-
   provisioner "file" {
-    source      = "/tmp/packer/.env"
+    source      = ".env"
     destination = "/tmp/.env"
+    generated   = true
   }
-
   provisioner "file" {
-    source      = "/tmp/packer/webapp.zip"
+    source      = "webapp.zip"
     destination = "/tmp/webapp.zip"
+    generated   = true
   }
-
   provisioner "shell" {
     script = "packer_image/mysql_packer.sh"
   }
