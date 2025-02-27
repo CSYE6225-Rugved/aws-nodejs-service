@@ -71,10 +71,6 @@ build {
     "source.amazon-ebs.ubuntu",
     "source.googlecompute.gcp_ubuntu"
   ]
-
-  provisioner "shell" {
-    script = "packer_image/mysql_packer.sh"
-  }
   provisioner "file" {
     source      = "service/webapp.service"
     destination = "/tmp/webapp.service"
@@ -88,5 +84,8 @@ build {
     source      = "webapp.zip"
     destination = "/tmp/webapp.zip"
     generated   = true
+  }
+   provisioner "shell" {
+    script = "packer_image/mysql_packer.sh"
   }
 }
