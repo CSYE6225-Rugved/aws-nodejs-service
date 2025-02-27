@@ -154,23 +154,3 @@ jobs:
             echo "AMI not found, exiting."
             exit 1
           fi
-
-      - name: Share Image
-        run: |
-          PROJECT_ID=$(gcloud config get-value project)
-          IMAGE_NAME=$(gcloud compute images list \
-            --project="$PROJECT_ID" \
-            --sort-by="~creationTimestamp" \
-            --format="value(NAME)" \
-            --limit=1)
-
-          if [ -n "$IMAGE_NAME" ]; then
-            echo "Sharing image $IMAGE_NAME with GCP DEMO account..."
-            gcloud compute images add-iam-policy-binding "$IMAGE_NAME" \
-              --project="$PROJECT_ID" \
-              --member="user:${{ secrets.GCP_DEMO_ACCOUNT_EMAIL }}" \
-              --role="roles/compute.imageUser"
-          else
-            echo "Image not found, exiting."
-            exit 1
-          fi
