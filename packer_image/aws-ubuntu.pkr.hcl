@@ -71,27 +71,20 @@ build {
     "source.amazon-ebs.ubuntu",
     "source.googlecompute.gcp_ubuntu"
   ]
-
-  # Provision the service file
   provisioner "file" {
     source      = "service/webapp.service"
     destination = "/tmp/webapp.service"
   }
 
-  # Provision the environment file from the build directory
   provisioner "file" {
     source      = "build/.env"
     destination = "/tmp/.env"
   }
 
-  # Provision the webapp archive from the build directory
   provisioner "file" {
     source      = "build/webapp.zip"
     destination = "/tmp/webapp.zip"
   }
-
-  # Verify that files are present 
-  (optional but useful for debugging)
   provisioner "shell" {
     inline = [
       "echo 'Verifying transferred files...'",
@@ -101,8 +94,6 @@ build {
       "fi"
     ]
   }
-
-  # Run the MySQL and application setup script
   provisioner "shell" {
     script = "packer_image/mysql_packer.sh"
   }
