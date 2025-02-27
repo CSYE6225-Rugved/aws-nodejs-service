@@ -89,22 +89,26 @@ jobs:
           name: webapp-artifact
           path: build
 
-      - name: Prepare Files for Packer
+      - name: Prepare Build Directory
         run: |
-            # Create packer directory
-            sudo mkdir -p /tmp/packer
+            # Create build directory
+            mkdir -p build
             
-            # Copy files to packer directory
-            sudo cp service/webapp.service /tmp/packer/
-            sudo cp build/.env /tmp/packer/
-            sudo cp build/webapp.zip /tmp/packer/
+            # Create .env file
+            cat << EOF > build/.env
+            DB_NAME=${{ secrets.MYSQL_DATABASE }}
+            DB_USER=${{ secrets.MYSQL_USER }}
+            DB_PASSWORD=${{ secrets.MYSQL_PASSWORD }}
+            DB_HOST=${{ secrets.DB_HOST }}
+            DB_DIALECT=${{ secrets.DB_DIALECT }}
+            EOF
             
-            # Set permissions
-            sudo chmod 644 /tmp/packer/*
+            # Create webapp archive
+            zip -r build/webapp.zip . -x "node_modules/*" "build/*"
             
             # Verify files
-            echo "Files in /tmp/packer:"
-            ls -la /tmp/packer/
+            echo "Verifying files..."
+            ls -la build/webapp.zip build/.env service/webapp.service
 
       - name: Install Packer
         uses: hashicorp/setup-packer@v2
