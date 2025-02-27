@@ -1,14 +1,19 @@
 [Unit]
-Description=Web Application Service
+Description=CSYE 6225 App
+ConditionPathExists=/opt/application.properties
 After=network.target
 
 [Service]
+Type=simple
 User=csye6225
 Group=csye6225
-WorkingDirectory=/opt/webapp
-ExecStart=/usr/bin/node /opt/webapp/app.js
+WorkingDirectory=/opt/app
+ExecStart=/opt/app/app.js
 Restart=always
-EnvironmentFile=/opt/webapp/.env
+RestartSec=3
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=csye6225
 
 [Install]
 WantedBy=multi-user.target
