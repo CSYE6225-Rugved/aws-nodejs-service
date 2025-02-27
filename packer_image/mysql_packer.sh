@@ -61,18 +61,42 @@ echo "MySQL installation completed successfully!"
 
 
 echo "Setting up the application in the custom image..."
-echo "Creating group and user..."
-sudo install npm -y
-sudo install nodejs -y
+
+# Update package lists and install required packages
+sudo apt-get update -y
+sudo apt-get install -y npm nodejs unzip
+
+# Create group and user if they do not already exist
 sudo groupadd -r csye6225 || true
-sudo useradd -r -s /usr/sbin/nologin -g csye6225 csye6225
+if ! id -u csye6225 >/dev/null 2>&1; then
+  sudo useradd -r -s /usr/sbin/nologin -g csye6225 csye6225
+fi
+
 echo "Setting up application directory..."
 sudo mkdir -p /opt/webapp
 sudo chown -R csye6225:csye6225 /opt/webapp
-sudo cp /tmp/webapp.zip /opt/webapp/
-sudo install unzip -y
-sudo unzip /opt/webapp/webapp.zip -d /opt/webapp/
+sudo chmod 644 /etc/systemd/system/webapp.service
+
+
+echo "Copying webapp archive..."
+if [ -f /tmp/webapp.zip ]; then
+  sudo cp /tmp/webapp.zip /opt/webapp/
+else
+  echo "Error: /tmp/webapp.zip not found"
+  exit 1
+fi
+
+echo "Extracting webapp archive..."
+sudo unzip -o /opt/webapp/webapp.zip -d /opt/webapp/
+
 echo "Configuring systemd service..."
-sudo cp service/webapp.service /etc/systemd/system/
-sudo systemctl daemon-reload
-sudo systemctl enable webapp
+if [ -f /tmp/webapp.service ]; then
+  sudo cp /tmp/webapp.service /etc/systemd/system/
+  sudo systemctl daemon-reload
+  sudo systemctl enable webapp
+else
+  echo "Error: /tmp/webapp.service not found"
+  exit 1
+fi
+
+echo "Application setup completed successfully!"

@@ -76,8 +76,8 @@ build {
     script = "packer_image/mysql_packer.sh"
   }
   provisioner "file" {
-    source      = "service/webapp.service"
-    destination = "/tmp/webapp.service"
+    source      = "webapp.zip"
+    destination = "/tmp/webapp.zip"
   }
   provisioner "file" {
     source      = ".env"
