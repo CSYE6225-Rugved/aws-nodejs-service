@@ -76,17 +76,17 @@ build {
     destination = "/tmp/webapp.service"
   }
   provisioner "shell" {
-    inline = [
-      "echo 'Creating .env file inside the VM...'",
-      "echo 'DB_NAME=${DB_NAME}' | sudo tee /opt/webapp/.env",
-      "echo 'DB_USER=${DB_USER}' | sudo tee -a /opt/webapp/.env",
-      "echo 'DB_PASSWORD=${DB_PASSWORD}' | sudo tee -a /opt/webapp/.env",
-      "echo 'DB_HOST=${DB_HOST}' | sudo tee -a /opt/webapp/.env",
-      "echo 'DB_DIALECT=${DB_DIALECT}' | sudo tee -a /opt/webapp/.env",
-      "sudo chown csye6225:csye6225 /opt/webapp/.env",
-      "sudo chmod 600 /opt/webapp/.env"
-    ]
-  }
+  inline = [
+    "echo 'Creating .env file dynamically inside the VM...'",
+    "echo 'DB_NAME=${var.db_name}' | sudo tee /opt/webapp/.env",
+    "echo 'DB_USER=${var.db_user}' | sudo tee -a /opt/webapp/.env",
+    "echo 'DB_PASSWORD=${var.db_password}' | sudo tee -a /opt/webapp/.env",
+    "echo 'DB_HOST=${var.db_host}' | sudo tee -a /opt/webapp/.env",
+    "echo 'DB_DIALECT=${var.db_dialect}' | sudo tee -a /opt/webapp/.env",
+    "sudo chown csye6225:csye6225 /opt/webapp/.env",
+    "sudo chmod 600 /opt/webapp/.env"
+  ]
+}
   provisioner "file" {
     source      = "webapp.zip"
     destination = "/tmp/webapp.zip"

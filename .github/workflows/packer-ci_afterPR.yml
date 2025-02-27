@@ -110,11 +110,20 @@ jobs:
             echo "DB_DIALECT=${{ secrets.DB_DIALECT }}" >> $GITHUB_ENV
       - name: Build Custom Image with Packer
         run: |
-          set -e
-          ls -lah  # Verify .env exists
           packer init packer_image/
-          packer validate packer_image/
-          packer build packer_image/
+          packer validate -var "db_name=${{ secrets.MYSQL_DATABASE }}" \
+                      -var "db_user=${{ secrets.MYSQL_USER }}" \
+                      -var "db_password=${{ secrets.MYSQL_PASSWORD }}" \
+                      -var "db_host=${{ secrets.DB_HOST }}" \
+                      -var "db_dialect=${{ secrets.DB_DIALECT }}" \
+                      packer_image/
+          packer build -var "db_name=${{ secrets.MYSQL_DATABASE }}" \
+                   -var "db_user=${{ secrets.MYSQL_USER }}" \
+                   -var "db_password=${{ secrets.MYSQL_PASSWORD }}" \
+                   -var "db_host=${{ secrets.DB_HOST }}" \
+                   -var "db_dialect=${{ secrets.DB_DIALECT }}" \
+                   packer_image/
+
 
       - name: share image
         run: |
