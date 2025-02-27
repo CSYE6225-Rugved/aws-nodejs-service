@@ -60,19 +60,42 @@ sudo mysql -e "FLUSH PRIVILEGES;"
 echo "MySQL installation completed successfully!"
 
 
-echo "Setting up the application in the custom image..."
-echo "Creating group and user..."
-sudo install npm -y
-sudo install nodejs -y
+#!/bin/bash
+set -e
+
+# Install dependencies and create user/group
+sudo apt-get update -y
+sudo apt-get install -y npm nodejs unzip
+
 sudo groupadd -r csye6225 || true
 sudo useradd -r -s /usr/sbin/nologin -g csye6225 csye6225
+
 echo "Setting up application directory..."
 sudo mkdir -p /opt/webapp
 sudo chown -R csye6225:csye6225 /opt/webapp
-sudo cp /tmp/webapp.zip /opt/webapp/
-sudo install unzip -y
-sudo unzip /opt/webapp/webapp.zip -d /opt/webapp/
-echo "Configuring systemd service..."
-sudo cp service/webapp.service /etc/systemd/system/
-sudo systemctl daemon-reload
-sudo systemctl enable webapp
+
+# Copy and extract the webapp archive, ensuring files exist
+if [ -f /tmp/webapp.zip ]; then
+  sudo cp /tmp/webapp.zip /opt/webapp/
+  sudo unzip /opt/webapp/webapp.zip -d /opt/webapp/
+else
+  echo "Error: /tmp/webapp.zip not found" && exit 1
+fi
+
+# Copy .env file to the application directory (optional, if needed by the app)
+if [ -f /tmp/.env ]; then
+  sudo cp /tmp/.env /opt/webapp/
+else
+  echo "Error: /tmp/.env not found" && exit 1
+fi
+
+# Copy the service file and enable the service
+if [ -f /tmp/webapp.service ]; then
+  sudo cp /tmp/webapp.service /etc/systemd/system/
+  sudo systemctl daemon-reload
+  sudo systemctl enable webapp
+else
+  echo "Error: /tmp/webapp.service not found" && exit 1
+fi
+
+echo "Custom image build succeeded!"

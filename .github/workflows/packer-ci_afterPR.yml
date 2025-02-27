@@ -7,6 +7,7 @@ on:
 
 jobs:
   test:
+    if: github.event.pull_request.merged == true
     name: Run Integration Tests with MySQL
     runs-on: ubuntu-latest
     steps:
@@ -24,12 +25,15 @@ jobs:
         run: |
           echo "Restarting MySQL..."
           sudo systemctl restart mysql
-
           echo "Creating database and user..."
-          mysql --user=${{ secrets.MYSQL_USER }} --password=${{ secrets.MYSQL_PASSWORD }} -e "CREATE DATABASE IF NOT EXISTS \`${{ secrets.MYSQL_DATABASE }}\`;"
-          mysql --user=${{ secrets.MYSQL_USER }} --password=${{ secrets.MYSQL_PASSWORD }} -e "CREATE USER '${{ secrets.MYSQL_USER }}'@'%' IDENTIFIED BY '${{ secrets.MYSQL_PASSWORD }}';"
-          mysql --user=${{ secrets.MYSQL_USER }} --password=${{ secrets.MYSQL_PASSWORD }} -e "GRANT ALL PRIVILEGES ON \`${{ secrets.MYSQL_DATABASE }}\`.* TO '${{ secrets.MYSQL_USER }}'@'%';"
-          mysql --user=${{ secrets.MYSQL_USER }} --password=${{ secrets.MYSQL_PASSWORD }} -e "FLUSH PRIVILEGES;"
+          mysql --user=${{ secrets.MYSQL_USER }} --password=${{ secrets.MYSQL_PASSWORD }} \
+                -e "CREATE DATABASE IF NOT EXISTS \`${{ secrets.MYSQL_DATABASE }}\`;"
+          mysql --user=${{ secrets.MYSQL_USER }} --password=${{ secrets.MYSQL_PASSWORD }} \
+                -e "CREATE USER '${{ secrets.MYSQL_USER }}'@'%' IDENTIFIED BY '${{ secrets.MYSQL_PASSWORD }}';"
+          mysql --user=${{ secrets.MYSQL_USER }} --password=${{ secrets.MYSQL_PASSWORD }} \
+                -e "GRANT ALL PRIVILEGES ON \`${{ secrets.MYSQL_DATABASE }}\`.* TO '${{ secrets.MYSQL_USER }}'@'%';"
+          mysql --user=${{ secrets.MYSQL_USER }} --password=${{ secrets.MYSQL_PASSWORD }} \
+                -e "FLUSH PRIVILEGES;"
 
       - name: Set Up Node.js
         uses: actions/setup-node@v4
@@ -45,11 +49,12 @@ jobs:
       - name: Create .env file
         run: |
           echo "Creating .env file..."
-          echo "DB_NAME=${{ secrets.MYSQL_DATABASE }}" > .env
-          echo "DB_USER=${{ secrets.MYSQL_USER }}" >> .env
-          echo "DB_PASSWORD=${{ secrets.MYSQL_PASSWORD }}" >> .env
-          echo "DB_HOST=${{ secrets.DB_HOST }}" >> .env
-          echo "DB_DIALECT=${{ secrets.DB_DIALECT }}" >> .env
+          mkdir -p build
+          echo "DB_NAME=${{ secrets.MYSQL_DATABASE }}" > build/.env
+          echo "DB_USER=${{ secrets.MYSQL_USER }}" >> build/.env
+          echo "DB_PASSWORD=${{ secrets.MYSQL_PASSWORD }}" >> build/.env
+          echo "DB_HOST=${{ secrets.DB_HOST }}" >> build/.env
+          echo "DB_DIALECT=${{ secrets.DB_DIALECT }}" >> build/.env
 
       - name: Run Integration Tests
         env:
@@ -61,8 +66,9 @@ jobs:
         run: NODE_ENV=test npm test
 
   build:
+    if: github.event.pull_request.merged == true
     name: Build Application Artifact
-    needs: test 
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -72,25 +78,45 @@ jobs:
         run: |
           npm install
           npm install dotenv --save
+
       - name: Create .env file
         run: |
-          echo "DB_NAME=${{ secrets.MYSQL_DATABASE }}" > .env
-          echo "DB_USER=${{ secrets.MYSQL_USER }}" >> .env
-          echo "DB_PASSWORD=${{ secrets.MYSQL_PASSWORD }}" >> .env
-          echo "DB_HOST=${{ secrets.DB_HOST }}" >> .env
-          echo "DB_DIALECT=${{ secrets.DB_DIALECT }}" >> .env
+          echo "Creating .env file..."
+          mkdir -p build
+          echo "DB_NAME=${{ secrets.MYSQL_DATABASE }}" > build/.env
+          echo "DB_USER=${{ secrets.MYSQL_USER }}" >> build/.env
+          echo "DB_PASSWORD=${{ secrets.MYSQL_PASSWORD }}" >> build/.env
+          echo "DB_HOST=${{ secrets.DB_HOST }}" >> build/.env
+          echo "DB_DIALECT=${{ secrets.DB_DIALECT }}" >> build/.env
 
       - name: Build Artifact
-        run: 
-          zip -r webapp.zip .
+        run: |
+          # Create an archive excluding node_modules, .git and build directory itself
+          zip -r build/webapp.zip . -x "node_modules/*" ".git/*" "build/*"
+
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: webapp-artifact
+          path: |
+            build/webapp.zip
+            build/.env
+            service/webapp.service
 
   packer-build:
+    if: github.event.pull_request.merged == true
     name: Build Custom Image for AWS & GCP
     needs: [test, build]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+
+      - name: Download Build Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: webapp-artifact
+          path: .
 
       - name: Install Packer
         uses: hashicorp/setup-packer@v2
@@ -114,19 +140,19 @@ jobs:
           packer validate packer_image/
           packer build packer_image/
 
-      - name: share image
+      - name: Share AMI
         run: |
           AMI_ID=$(aws ec2 describe-images \
-          --owners self \
-          --filters "Name=state,Values=available" \
+            --owners self \
+            --filters "Name=state,Values=available" \
             --query "Images | sort_by(@, &CreationDate)[-1].ImageId" \
-                --output text)
+            --output text)
   
-            if [ -n "$AMI_ID" ]; then
-              echo "Sharing AMI $AMI_ID with AWS DEMO account..."
-              aws ec2 modify-image-attribute --image-id "$AMI_ID" \
-                --launch-permission "{\"Add\": [{\"UserId\": \"${{ secrets.AWS_DEMO_ACCOUNT_ID }}\"}]}"
-            else
-              echo "AMI not found, exiting."
-              exit 1
-            fi
+          if [ -n "$AMI_ID" ]; then
+            echo "Sharing AMI $AMI_ID with AWS DEMO account..."
+            aws ec2 modify-image-attribute --image-id "$AMI_ID" \
+              --launch-permission "{\"Add\": [{\"UserId\": \"${{ secrets.AWS_DEMO_ACCOUNT_ID }}\"}]}"
+          else
+            echo "AMI not found, exiting."
+            exit 1
+          fi
