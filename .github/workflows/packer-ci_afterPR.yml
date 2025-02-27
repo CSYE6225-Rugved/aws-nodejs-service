@@ -91,28 +91,20 @@ jobs:
 
       - name: Prepare Files for Packer
         run: |
-            # Create build directory if it doesn't exist
-            mkdir -p build
+            # Create packer directory
+            sudo mkdir -p /tmp/packer
             
-            # Ensure files exist
-            if [ ! -f "build/webapp.zip" ] || [ ! -f "build/.env" ] || [ ! -f "service/webapp.service" ]; then
-              echo "Required files missing"
-              ls -la build/
-              ls -la service/
-              exit 1
-            fi
-  
-            # Make files available for Packer
-            cp build/webapp.zip .
-            cp build/.env .
-            cp service/webapp.service .
-  
-            # Set correct permissions
-            chmod 644 webapp.zip .env webapp.service
+            # Copy files to packer directory
+            sudo cp service/webapp.service /tmp/packer/
+            sudo cp build/.env /tmp/packer/
+            sudo cp build/webapp.zip /tmp/packer/
+            
+            # Set permissions
+            sudo chmod 644 /tmp/packer/*
             
             # Verify files
-            echo "Verifying files:"
-            ls -la webapp.zip .env webapp.service
+            echo "Files in /tmp/packer:"
+            ls -la /tmp/packer/
 
       - name: Install Packer
         uses: hashicorp/setup-packer@v2
