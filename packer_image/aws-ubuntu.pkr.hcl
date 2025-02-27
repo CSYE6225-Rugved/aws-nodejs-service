@@ -78,7 +78,6 @@ build {
   provisioner "file" {
     source      = ".env"
     destination = "/tmp/.env"
-    when        = "before"
     generated   = true
   }
   provisioner "file" {
