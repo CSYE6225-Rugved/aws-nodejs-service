@@ -64,23 +64,43 @@ source "googlecompute" "gcp_ubuntu" {
   tags = ["packer-image"]
 }
 
-
 build {
   name = "learn-packer"
   sources = [
     "source.amazon-ebs.ubuntu",
     "source.googlecompute.gcp_ubuntu"
   ]
+
+  provisioner "file" {
+    source      = "webapp.zip" # Ensure this file is generated in GitHub Actions before being uploaded
+    destination = "/tmp/webapp.zip"
+  }
+
   provisioner "file" {
     source      = "service/webapp.service"
     destination = "/tmp/webapp.service"
   }
-  provisioner "file" {
-    source      = "webapp.zip"
-    destination = "/tmp/webapp.zip"
-    generated   = true
-  }
+
   provisioner "shell" {
-    script = "packer_image/mysql_packer.sh"
+    inline = [
+      "echo 'Creating csye6225 user...'",
+      "sudo groupadd -r csye6225 || true",
+      "sudo useradd -r -s /usr/sbin/nologin -g csye6225 csye6225",
+
+      "echo 'Setting up application directory...'",
+      "sudo mkdir -p /opt/webapp",
+      "sudo chown -R csye6225:csye6225 /opt/webapp",
+
+      "echo 'Copying application files...'",
+      "sudo cp /tmp/webapp.zip /opt/webapp/",
+      "sudo apt-get install -y unzip",
+      "sudo unzip /opt/webapp/webapp.zip -d /opt/webapp/",
+      "sudo chown -R csye6225:csye6225 /opt/webapp",
+
+      "echo 'Configuring systemd service...'",
+      "sudo cp /tmp/webapp.service /etc/systemd/system/webapp.service",
+      "sudo systemctl daemon-reload",
+      "sudo systemctl enable webapp"
+    ]
   }
 }

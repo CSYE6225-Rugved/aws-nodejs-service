@@ -26,10 +26,10 @@ jobs:
           sudo systemctl restart mysql
 
           echo "Creating database and user..."
-          mysql --user=${{ secrets.MYSQL_USER }} --password=${{ secrets.MYSQL_PASSWORD }} -e "CREATE DATABASE IF NOT EXISTS \`${{ secrets.MYSQL_DATABASE }}\`;"
-          mysql --user=${{ secrets.MYSQL_USER }} --password=${{ secrets.MYSQL_PASSWORD }} -e "CREATE USER '${{ secrets.MYSQL_USER }}'@'%' IDENTIFIED BY '${{ secrets.MYSQL_PASSWORD }}';"
-          mysql --user=${{ secrets.MYSQL_USER }} --password=${{ secrets.MYSQL_PASSWORD }} -e "GRANT ALL PRIVILEGES ON \`${{ secrets.MYSQL_DATABASE }}\`.* TO '${{ secrets.MYSQL_USER }}'@'%';"
-          mysql --user=${{ secrets.MYSQL_USER }} --password=${{ secrets.MYSQL_PASSWORD }} -e "FLUSH PRIVILEGES;"
+          mysql -u root -e "CREATE DATABASE IF NOT EXISTS \`${{ secrets.MYSQL_DATABASE }}\`;"
+          mysql -u root -e "CREATE USER IF NOT EXISTS '${{ secrets.MYSQL_USER }}'@'%' IDENTIFIED BY '${{ secrets.MYSQL_PASSWORD }}';"
+          mysql -u root -e "GRANT ALL PRIVILEGES ON \`${{ secrets.MYSQL_DATABASE }}\`.* TO '${{ secrets.MYSQL_USER }}'@'%';"
+          mysql -u root -e "FLUSH PRIVILEGES;"
 
       - name: Set Up Node.js
         uses: actions/setup-node@v4
@@ -38,9 +38,7 @@ jobs:
           cache: "npm"
 
       - name: Install Dependencies
-        run: |
-          npm ci
-          npm install dotenv --save
+        run: npm ci
 
       - name: Run Integration Tests
         env:
@@ -74,7 +72,7 @@ jobs:
         run: zip -r webapp.zip .
 
       - name: Upload Build Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: webapp-artifact
           path: webapp.zip
@@ -88,45 +86,31 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Download Build Artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: webapp-artifact
 
       - name: Install Packer
         uses: hashicorp/setup-packer@v2
 
-      - name: Set up AWS CLI
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
-
-      - name: Set up GCP CLI
-        uses: google-github-actions/auth@v1
-        with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
-
       - name: Build Custom Image with Packer
         run: |
-          ls -lah  # Verify webapp.zip exists
           packer init packer_image/
           packer validate packer_image/
           packer build packer_image/
 
-      - name: Share AWS Image
+      - name: Configure Custom Image Setup
         run: |
-          AMI_ID=$(aws ec2 describe-images \
-          --owners self \
-          --filters "Name=state,Values=available" \
-            --query "Images | sort_by(@, &CreationDate)[-1].ImageId" \
-                --output text)
-  
-          if [ -n "$AMI_ID" ]; then
-            echo "Sharing AMI $AMI_ID with AWS DEMO account..."
-            aws ec2 modify-image-attribute --image-id "$AMI_ID" \
-              --launch-permission '{"Add": [{"UserId": "${{ secrets.AWS_DEMO_ACCOUNT_ID }}"}]}'
-          else
-            echo "AMI not found, exiting."
-            exit 1
-          fi
+          sudo groupadd -r csye6225 || true
+          sudo useradd -r -s /usr/sbin/nologin -g csye6225 csye6225
+          sudo mkdir -p /opt/webapp
+          sudo chown -R csye6225:csye6225 /opt/webapp
+          sudo cp webapp.zip /opt/webapp/
+          sudo unzip /opt/webapp/webapp.zip -d /opt/webapp/
+          sudo cp service/webapp.service /etc/systemd/system/
+          sudo systemctl daemon-reload
+          sudo systemctl enable webapp
+
+      - name: Ensure No Custom Image is Built on Failure
+        if: failure()
+        run: exit 1
