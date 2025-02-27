@@ -2,6 +2,14 @@
 
 export DEBIAN_FRONTEND=noninteractive
 
+# Add MySQL APT GPG Key
+sudo mkdir -p /etc/apt/keyrings
+sudo wget -qO /etc/apt/keyrings/mysql.gpg https://repo.mysql.com/RPM-GPG-KEY-mysql-2022
+sudo chmod 644 /etc/apt/keyrings/mysql.gpg
+
+# Add MySQL Repository
+echo "deb [signed-by=/etc/apt/keyrings/mysql.gpg] http://repo.mysql.com/apt/ubuntu jammy mysql-8.0" | sudo tee /etc/apt/sources.list.d/mysql.list
+
 echo "Updating package lists..."
 sudo apt-get update -y
 sudo apt-get upgrade -y
