@@ -72,36 +72,21 @@ build {
     "source.googlecompute.gcp_ubuntu"
   ]
 
-  # Provision the service file
+  provisioner "shell" {
+    script = "packer_image/mysql_packer.sh"
+  }
   provisioner "file" {
     source      = "service/webapp.service"
     destination = "/tmp/webapp.service"
   }
-
-  # Provision the environment file from the build directory
   provisioner "file" {
-    source      = "build/.env"
+    source      = ".env"
     destination = "/tmp/.env"
+    generated   = true
   }
-
-  # Provision the webapp archive from the build directory
   provisioner "file" {
-    source      = "build/webapp.zip"
+    source      = "webapp.zip"
     destination = "/tmp/webapp.zip"
+    generated   = true
   }
-
-  # Verify that files are present (optional but useful for debugging)
-  provisioner "shell" {
-    inline = [
-      "echo 'Verifying transferred files...'",
-      "ls -la /tmp/webapp.service /tmp/.env /tmp/webapp.zip",
-      "if [ ! -f /tmp/webapp.service ] || [ ! -f /tmp/.env ] || [ ! -f /tmp/webapp.zip ]; then",
-      "  echo 'One or more required files are missing'; exit 1",
-      "fi"
-    ]
-  }
-
-  # Run the MySQL and application setup script
-  provisioner "shell" {
-    script = "packer_image/mysql_packer.sh"
-  }
+}
