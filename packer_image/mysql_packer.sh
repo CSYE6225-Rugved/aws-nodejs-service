@@ -50,7 +50,6 @@ else
     exit 1
 fi
 
-
 echo "Creating database and user..."
 sudo mysql -e "CREATE DATABASE IF NOT EXISTS HealthCheck;"
 sudo mysql -e "CREATE USER IF NOT EXISTS 'rugved'@'localhost' IDENTIFIED BY 'admin';"
@@ -59,20 +58,36 @@ sudo mysql -e "FLUSH PRIVILEGES;"
 
 echo "MySQL installation completed successfully!"
 
-
 echo "Setting up the application in the custom image..."
 echo "Creating group and user..."
-sudo install npm -y
-sudo install nodejs -y
+sudo apt-get install -y npm
+sudo apt-get install -y nodejs
 sudo groupadd -r csye6225 || true
 sudo useradd -r -s /usr/sbin/nologin -g csye6225 csye6225
+
 echo "Setting up application directory..."
 sudo mkdir -p /opt/webapp
 sudo chown -R csye6225:csye6225 /opt/webapp
-sudo cp /tmp/webapp.zip /opt/webapp/
-sudo install unzip -y
+
+# Ensure the webapp.zip file is available in the correct location
+if [ -f /tmp/webapp.zip ]; then
+    sudo cp /tmp/webapp.zip /opt/webapp/
+else
+    echo "Error: /tmp/webapp.zip not found."
+    exit 1
+fi
+
+sudo apt-get install -y unzip
 sudo unzip /opt/webapp/webapp.zip -d /opt/webapp/
+
 echo "Configuring systemd service..."
-sudo cp service/webapp.service /etc/systemd/system/
+# Ensure the webapp.service file is available in the correct location
+if [ -f service/webapp.service ]; then
+    sudo cp service/webapp.service /etc/systemd/system/
+else
+    echo "Error: service/webapp.service not found."
+    exit 1
+fi
+
 sudo systemctl daemon-reload
 sudo systemctl enable webapp
