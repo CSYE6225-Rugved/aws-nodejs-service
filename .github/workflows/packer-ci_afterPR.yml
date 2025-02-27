@@ -26,10 +26,10 @@ jobs:
           sudo systemctl restart mysql
 
           echo "Creating database and user..."
-          mysql --user=${{ secrets.MYSQL_USER }} --password=${{ secrets.MYSQL_PASSWORD }} -e "CREATE DATABASE IF NOT EXISTS \`${{ secrets.MYSQL_DATABASE }}\`;"
-          mysql --user=${{ secrets.MYSQL_USER }} --password=${{ secrets.MYSQL_PASSWORD }} -e "CREATE USER '${{ secrets.MYSQL_USER }}'@'%' IDENTIFIED BY '${{ secrets.MYSQL_PASSWORD }}';"
-          mysql --user=${{ secrets.MYSQL_USER }} --password=${{ secrets.MYSQL_PASSWORD }} -e "GRANT ALL PRIVILEGES ON \`${{ secrets.MYSQL_DATABASE }}\`.* TO '${{ secrets.MYSQL_USER }}'@'%';"
-          mysql --user=${{ secrets.MYSQL_USER }} --password=${{ secrets.MYSQL_PASSWORD }} -e "FLUSH PRIVILEGES;"
+          mysql -u root -e "CREATE DATABASE IF NOT EXISTS \\`${{ secrets.MYSQL_DATABASE }}\\`;"
+          mysql -u root -e "CREATE USER IF NOT EXISTS '${{ secrets.MYSQL_USER }}'@'%' IDENTIFIED BY '${{ secrets.MYSQL_PASSWORD }}';"
+          mysql -u root -e "GRANT ALL PRIVILEGES ON \\`${{ secrets.MYSQL_DATABASE }}\\`.* TO '${{ secrets.MYSQL_USER }}'@'%';"
+          mysql -u root -e "FLUSH PRIVILEGES;"
 
       - name: Set Up Node.js
         uses: actions/setup-node@v4
@@ -38,9 +38,7 @@ jobs:
           cache: "npm"
 
       - name: Install Dependencies
-        run: |
-          npm ci
-          npm install dotenv --save
+        run: npm ci
 
       - name: Run Integration Tests
         env:
@@ -60,12 +58,10 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install Dependencies
-        run: |
-          npm install
-          npm install dotenv --save
+        run: npm ci
+
       - name: Create .env file
         run: |
-          echo "Creating .env file..."
           echo "DB_NAME=${{ secrets.MYSQL_DATABASE }}" > .env
           echo "DB_USER=${{ secrets.MYSQL_USER }}" >> .env
           echo "DB_PASSWORD=${{ secrets.MYSQL_PASSWORD }}" >> .env
@@ -73,8 +69,13 @@ jobs:
           echo "DB_DIALECT=${{ secrets.DB_DIALECT }}" >> .env
 
       - name: Build Artifact
-        run: 
-          zip -r webapp.zip .
+        run: zip -r webapp.zip .
+
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: webapp-artifact
+          path: webapp.zip
 
   packer-build:
     name: Build Custom Image for AWS & GCP
@@ -83,6 +84,11 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+
+      - name: Download Build Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: webapp-artifact
 
       - name: Install Packer
         uses: hashicorp/setup-packer@v2
@@ -101,13 +107,12 @@ jobs:
 
       - name: Build Custom Image with Packer
         run: |
-          set -e
-          ls -lah  # Verify .env exists
+          ls -lah  # Verify webapp.zip exists
           packer init packer_image/
           packer validate packer_image/
           packer build packer_image/
 
-      - name: share image
+      - name: Share AWS Image
         run: |
           AMI_ID=$(aws ec2 describe-images \
           --owners self \
@@ -115,11 +120,11 @@ jobs:
             --query "Images | sort_by(@, &CreationDate)[-1].ImageId" \
                 --output text)
   
-            if [ -n "$AMI_ID" ]; then
-              echo "Sharing AMI $AMI_ID with AWS DEMO account..."
-              aws ec2 modify-image-attribute --image-id "$AMI_ID" \
-                --launch-permission "{\"Add\": [{\"UserId\": \"${{ secrets.AWS_DEMO_ACCOUNT_ID }}\"}]}"
-            else
-              echo "AMI not found, exiting."
-              exit 1
-            fi
+          if [ -n "$AMI_ID" ]; then
+            echo "Sharing AMI $AMI_ID with AWS DEMO account..."
+            aws ec2 modify-image-attribute --image-id "$AMI_ID" \
+              --launch-permission '{"Add": [{"UserId": "${{ secrets.AWS_DEMO_ACCOUNT_ID }}"}]}'
+          else
+            echo "AMI not found, exiting."
+            exit 1
+          fi
