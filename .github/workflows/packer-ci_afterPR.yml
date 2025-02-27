@@ -100,6 +100,15 @@ jobs:
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
+      - name: Create .env file
+        run: |
+          echo "Creating .env file..."
+          > .env
+          echo "DB_NAME=${{ secrets.MYSQL_DATABASE }}" >> .env
+          echo "DB_USER=${{ secrets.MYSQL_USER }}" >> .env
+          echo "DB_PASSWORD=${{ secrets.MYSQL_PASSWORD }}" >> .env
+          echo "DB_HOST=${{ secrets.DB_HOST }}" >> .env
+          echo "DB_DIALECT=${{ secrets.DB_DIALECT }}" >> .env
       - name: Build Custom Image with Packer
         run: |
           set -e
