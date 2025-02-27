@@ -83,6 +83,11 @@ jobs:
       - name: Build Artifact
         run: 
           zip -r webapp.zip .
+      - name: Upload Webapp Artifact
+        uses: actions/upload-artifact@v4
+        with:
+            name: webapp-package
+            path: webapp.zip
 
   packer-build:
     name: Build Custom Image for AWS & GCP
@@ -107,6 +112,11 @@ jobs:
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
+      - name: Download Webapp Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: webapp-package
+          path: packer_image/
       - name: Build Custom Image with Packer
         run: |
           set -e
