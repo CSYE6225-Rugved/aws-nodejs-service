@@ -75,7 +75,7 @@ build {
     source      = "service/webapp.service"
     destination = "/tmp/webapp.service"
   }
-  provisioner "shell" {
+  provisioner "file" {
     inline = [
       "echo 'Creating .env file inside the VM...'",
       "echo 'DB_NAME=${DB_NAME}' | sudo tee /opt/webapp/.env",
