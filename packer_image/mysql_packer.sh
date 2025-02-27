@@ -1,6 +1,5 @@
 #!/bin/bash
 
-set -e  # Exit immediately if a command exits with a non-zero status
 export DEBIAN_FRONTEND=noninteractive
 
 echo "Updating package lists..."
@@ -32,18 +31,17 @@ echo "Restarting MySQL service..."
 sudo systemctl restart mysql || sudo service mysql restart
 
 echo "Enabling MySQL service..."
-sudo systemctl enable mysql || echo "Warning: MySQL could not be enabled, continuing."
+sudo systemctl enable mysql || echo "⚠️ Warning: MySQL could not be enabled, continuing."
 
 echo "Verifying MySQL service status..."
 if systemctl is-active --quiet mysql; then
     echo "MySQL is running successfully."
 else
-    echo "MySQL installation failed. Showing last 50 logs:"
+    echo "MySQL installation failed."
     journalctl -u mysql --no-pager | tail -n 50
     exit 1
 fi
 
-# Uncomment below lines if you need to set a root password manually
 # echo "Setting MySQL root password and securing installation..."
 # sudo mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'root';"
 # sudo mysql -e "FLUSH PRIVILEGES;"
@@ -54,4 +52,4 @@ sudo mysql -e "CREATE USER IF NOT EXISTS 'rugved'@'localhost' IDENTIFIED BY 'adm
 sudo mysql -e "GRANT ALL PRIVILEGES ON HealthCheck.* TO 'rugved'@'localhost';"
 sudo mysql -e "FLUSH PRIVILEGES;"
 
-echo "MySQL installation and configuration completed successfully!"
+echo "MySQL installation completed successfully!"
