@@ -86,21 +86,33 @@ build {
       "echo 'Creating csye6225 user...'",
       "sudo groupadd -r csye6225 || true",
       "sudo useradd -r -s /usr/sbin/nologin -g csye6225 csye6225",
+      
+      "echo 'Ensuring unzip is installed...'",
+      "sudo apt-get update -y && sudo apt-get install -y unzip",
 
       "echo 'Setting up application directory...'",
       "sudo mkdir -p /opt/webapp",
       "sudo chown -R csye6225:csye6225 /opt/webapp",
 
+      "if [ ! -f /tmp/webapp.zip ]; then",
+      "    echo 'Error: /tmp/webapp.zip not found. Exiting...'",
+      "    exit 1",
+      "fi",
+
       "echo 'Copying application files...'",
       "sudo cp /tmp/webapp.zip /opt/webapp/",
-      "sudo apt-get install -y unzip",
       "sudo unzip /opt/webapp/webapp.zip -d /opt/webapp/",
       "sudo chown -R csye6225:csye6225 /opt/webapp",
+
+      "if [ ! -f /tmp/webapp.service ]; then",
+      "    echo 'Error: /tmp/webapp.service not found. Exiting...'",
+      "    exit 1",
+      "fi",
 
       "echo 'Configuring systemd service...'",
       "sudo cp /tmp/webapp.service /etc/systemd/system/webapp.service",
       "sudo systemctl daemon-reload",
-      "sudo systemctl enable webapp"
+      "sudo systemctl enable webapp || { echo 'Failed to enable webapp service'; exit 1; }"
     ]
   }
 }
