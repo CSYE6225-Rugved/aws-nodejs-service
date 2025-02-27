@@ -115,6 +115,7 @@ jobs:
       - name: Build Custom Image with Packer
         run: |
           set -e
+          ls -lah  # Verify .env exists
           packer init packer_image/
           packer validate packer_image/
           packer build packer_image/
