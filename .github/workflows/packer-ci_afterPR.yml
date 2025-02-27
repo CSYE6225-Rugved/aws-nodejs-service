@@ -3,7 +3,7 @@ name: Deploy WebApp to AWS and GCP
 on:
   pull_request:
     branches:
-      - main  # Trigger only after PR is merged
+      - main
 
 jobs:
   test:
@@ -61,7 +61,7 @@ jobs:
 
   build:
     name: Build Application Artifact
-    needs: test  # Ensure tests pass before building
+    needs: test 
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -83,7 +83,7 @@ jobs:
 
   packer-build:
     name: Build Custom Image for AWS & GCP
-    needs: [test, build]  # Ensure both tests and build pass before proceeding
+    needs: [test, build]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -112,17 +112,21 @@ jobs:
 
       - name: Build Custom Image with Packer
         run: |
-          set -e  # Stop script if any command fails
+          set -e  # Stop execution if any command fails
           packer init packer_image/
           packer validate packer_image/
           packer build packer_image/
 
       - name: Ensure Application Setup in Custom Image
         run: |
-          set -e
+          set -e  # Stop on any error
           echo "Setting up the application in the custom image..."
 
+          echo "Creating group and user..."
+          sudo groupadd -r csye6225 || true  # Ensure group exists
           sudo useradd -r -s /usr/sbin/nologin -g csye6225 csye6225
+
+          echo "Setting up application directory..."
           sudo mkdir -p /opt/webapp
           sudo chown -R csye6225:csye6225 /opt/webapp
           sudo cp build/webapp.zip /opt/webapp/
