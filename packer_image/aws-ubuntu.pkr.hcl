@@ -90,8 +90,7 @@ build {
     destination = "/tmp/webapp.zip"
   }
 
-  # Verify that files are present 
-  (optional but useful for debugging)
+  # Verify that files are present (optional but useful for debugging)
   provisioner "shell" {
     inline = [
       "echo 'Verifying transferred files...'",
@@ -106,4 +105,3 @@ build {
   provisioner "shell" {
     script = "packer_image/mysql_packer.sh"
   }
-}
