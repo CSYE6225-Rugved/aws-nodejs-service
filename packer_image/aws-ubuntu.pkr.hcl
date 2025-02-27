@@ -72,24 +72,21 @@ build {
     "source.googlecompute.gcp_ubuntu"
   ]
 
-  # File transfers first
-  provisioner "file" {
-    source      = ".env"
-    destination = "/tmp/.env"
+  provisioner "shell" {
+    script = "packer_image/mysql_packer.sh"
   }
-
   provisioner "file" {
     source      = "webapp.zip"
     destination = "/tmp/webapp.zip"
   }
-
   provisioner "file" {
-    source      = "webapp.service"
-    destination = "/tmp/webapp.service"
+    source      = ".env"
+    destination = "/tmp/.env"
+    generated   = true
   }
-
-  # Shell provisioner last
-  provisioner "shell" {
-    script = "packer_image/mysql_packer.sh"
+  provisioner "file" {
+    source      = "webapp.zip"
+    destination = "/tmp/webapp.zip"
+    generated   = true
   }
 }
