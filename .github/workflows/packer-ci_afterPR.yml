@@ -76,11 +76,14 @@ jobs:
           npm install dotenv --save
       - name: Create .env file
         run: |
-          echo "DB_NAME=${{ secrets.MYSQL_DATABASE }}" > .env
-          echo "DB_USER=${{ secrets.MYSQL_USER }}" >> .env
-          echo "DB_PASSWORD=${{ secrets.MYSQL_PASSWORD }}" >> .env
-          echo "DB_HOST=${{ secrets.DB_HOST }}" >> .env
-          echo "DB_DIALECT=${{ secrets.DB_DIALECT }}" >> .env
+          echo "Creating .env file..."
+          cat <<EOF > .env
+          DB_NAME=${{ secrets.MYSQL_DATABASE }}
+          DB_USER=${{ secrets.MYSQL_USER }}
+          DB_PASSWORD=${{ secrets.MYSQL_PASSWORD }}
+          DB_HOST=${{ secrets.DB_HOST }}
+          DB_DIALECT=${{ secrets.DB_DIALECT }}
+          EOF
 
       - name: Build Artifact
         run: 
