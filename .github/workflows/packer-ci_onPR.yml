@@ -21,12 +21,12 @@ jobs:
 
       - name: Initialize Packer
         id: init
-        run: packer init packer_image/
+        run: packer init .
 
       - name: Check Packer Formatting
         id: fmt
-        run: packer fmt -check packer_image/
+        run: packer fmt -check .
 
       - name: Validate Packer Template
         id: validate
-        run:  packer validate packer_image/
+        run:  packer validate aws-ubuntu.pkr.hcl
