@@ -2,7 +2,7 @@ name: Deploy WebApp to AWS and GCP
 
 on:
   pull_request:
-    types: [closed]
+    # types: [closed]
     branches:
       - main
 
@@ -60,44 +60,24 @@ jobs:
           DB_DIALECT: ${{ secrets.DB_DIALECT }}
         run: NODE_ENV=test npm test
 
-  build:
-    name: Build Application Artifact
+      
+
+  packer-build:
+    name: Build Custom Image for AWS & GCP
     needs: test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Install Dependencies
-        run: npm install
-
-      - name: Build Artifact
-        run: |
-          mkdir -p build
-          zip -r build/webapp.zip . -x "node_modules/*"
-
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: webapp-artifact
-          path: build/webapp.zip
-
-  packer-build:
-    name: Build Custom Image for AWS & GCP
-    needs: [test, build]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
       - name: Install Packer
-        uses: hashicorp/setup-packer@v2
-
-      - name: Download Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: webapp-artifact
-          path: build
+        run: | 
+          sudo apt-get update
+          sudo apt-get install -y unzip
+          curl -LO https://releases.hashicorp.com/packer/1.11.2/packer_1.11.2_linux_amd64.zip
+          unzip packer_1.11.2_linux_amd64.zip
+          sudo mv packer /usr/local/bin/
+          packer --version
 
       - name: Set up AWS CLI
         uses: aws-actions/configure-aws-credentials@v2
@@ -111,32 +91,22 @@ jobs:
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
-      - name: Build Custom Image with Packer
+      - name: Create webapp.zip from existing directory
         run: |
-          set -e  # Stop execution if any command fails
-          packer init packer_image/
-          packer validate packer_image/
-          packer build packer_image/
+          zip -r webapp.zip .
+        shell: bash
 
-      - name: Ensure Application Setup in Custom Image
-        run: |
-          set -e  # Stop on any error
-          echo "Setting up the application in the custom image..."
-
-          echo "Creating group and user..."
-          sudo groupadd -r csye6225 || true  # Ensure group exists
-          sudo useradd -r -s /usr/sbin/nologin -g csye6225 csye6225
-
-          echo "Setting up application directory..."
-          sudo mkdir -p /opt/webapp
-          sudo chown -R csye6225:csye6225 /opt/webapp
-          sudo cp build/webapp.zip /opt/webapp/
-          sudo unzip /opt/webapp/webapp.zip -d /opt/webapp/
-
-          echo "Configuring systemd service..."
-          sudo cp service/webapp.service /etc/systemd/system/
-          sudo systemctl daemon-reload
-          sudo systemctl enable webapp
+      - name: Run `packer init`
+        id: init
+        run: packer init .
+        
+      - name: Run `packer validate`
+        id: validate
+        run: packer validate .
+      
+      - name: Run `packer build`
+        id: build
+        run: packer build aws-ubuntu.pkr.hcl
 
       - name: share image in aws
         run: |

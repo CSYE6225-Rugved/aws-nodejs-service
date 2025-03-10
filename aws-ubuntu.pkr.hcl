@@ -73,6 +73,20 @@ build {
   ]
 
   provisioner "shell" {
-    script = "packer_image/mysql_packer.sh"
+    script = "mysql_packer.sh"
+  }
+
+  provisioner "file"{
+    source = "webapp.zip"
+    destination ="/tmp/"
+  }
+
+  provisioner "file"{
+    source = "webapp.service"
+    destination ="/tmp/"
+  }
+
+  provisioner "shell" {
+    script = "init-app.sh"
   }
 }
