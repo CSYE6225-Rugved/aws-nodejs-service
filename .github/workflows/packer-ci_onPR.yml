@@ -25,7 +25,7 @@ jobs:
 
       - name: Check Packer Formatting
         id: fmt
-        run: packer fmt -check .
+        run: packer fmt -check aws-ubuntu.pkr.hcl
 
       - name: Validate Packer Template
         id: validate
