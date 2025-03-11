@@ -80,7 +80,10 @@ build {
     source = "webapp.zip"
     destination ="/tmp/"
   }
-
+  provisioner "file"{
+    source = ".env"
+    destination = "/tmp"
+  }
   provisioner "file"{
     source = "webapp.service"
     destination ="/tmp/"

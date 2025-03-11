@@ -17,6 +17,11 @@ sudo unzip /opt/webapp.zip -d /opt/webapp
 cd /opt/webapp 
 sudo chown -R csye6225:csye6225 /opt/webapp
 
+echo "Installing dotenv..."
+sudo npm install dotenv --save
+echo "Setting up environment variables..."
+sudo cp /tmp/.env /opt/webapp
+
 echo "Configuring systemd service..."
 sudo cp /tmp/webapp.service /etc/systemd/system/
 
