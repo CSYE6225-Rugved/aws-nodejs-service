@@ -78,15 +78,15 @@ build {
 
   provisioner "file"{
     source = "webapp.zip"
-    destination ="/tmp/"
+    destination ="/tmp/webapp.zip"
   }
   provisioner "file"{
     source = ".env"
-    destination = "/tmp"
+    destination = "/tmp/.env"
   }
   provisioner "file"{
     source = "webapp.service"
-    destination ="/tmp/"
+    destination ="/tmp/webapp.service"
   }
 
   provisioner "shell" {
