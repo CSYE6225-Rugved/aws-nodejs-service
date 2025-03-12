@@ -37,7 +37,7 @@ packer {
 }
 
 source "amazon-ebs" "ubuntu" {
-  ami_name      = "rugved-${formatdate("20060102-150405", timestamp())}-${uuidv4()}"
+  ami_name      =          "rugved-${formatdate("20060102-150405", timestamp())}-${uuidv4()}"
   instance_type = var.aws_instance_type
   region        = var.aws_region
 
