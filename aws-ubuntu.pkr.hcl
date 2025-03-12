@@ -94,7 +94,6 @@ build {
   }
 
   provisioner "shell" {
-    environment_vars = ["MYSQL_ROOT_PASSWORD={{user `mysql_root_password`}}"]
     script           = "init-app.sh"
   }
 }

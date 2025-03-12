@@ -121,8 +121,6 @@ jobs:
 
       - name: Run `packer build` 
         id: build
-        env:
-          MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_USER_PASSWORD }}
         run: packer build aws-ubuntu.pkr.hcl
 
       - name: share image in aws
