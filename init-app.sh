@@ -16,6 +16,7 @@ sudo cp /tmp/webapp.zip /opt/
 sudo unzip /opt/webapp.zip -d /opt/webapp
 cd /opt/webapp 
 sudo chown -R csye6225:csye6225 /opt/webapp
+sudo chmod -R 755 /opt/webapp
 
 echo "Installing dotenv..."
 sudo npm install dotenv --save
@@ -27,3 +28,4 @@ sudo cp /tmp/webapp.service /etc/systemd/system/
 
 sudo systemctl daemon-reload
 sudo systemctl enable webapp
+sudo systemctl start webapp
