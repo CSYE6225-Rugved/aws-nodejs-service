@@ -135,7 +135,7 @@ jobs:
 
           if [ -n "$AMI_ID" ]; then
             echo "Sharing AMI $AMI_ID with AWS DEMO account..."
-            aws ec2 modify-image-attribute --image-id "$AMI_ID" \ 
+            aws ec2 modify-image-attribute --image-id "$AMI_ID" \
               --launch-permission "{\"Add\": [{\"UserId\": \"${{ secrets.AWS_DEMO_ACCOUNT_ID }}\"}]}"
           else
             echo "AMI not found, exiting."
