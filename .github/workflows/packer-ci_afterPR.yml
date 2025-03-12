@@ -119,7 +119,7 @@ jobs:
         id: validate
         run: packer validate .
 
-      - name: Run `packer build`
+      - name: Run `packer build` 
         id: build
         env:
           MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_USER_PASSWORD }}
