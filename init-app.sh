@@ -29,3 +29,9 @@ sudo cp /tmp/webapp.service /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable webapp
 sudo systemctl start webapp
+
+echo "Updating MySQL user password and authentication method..."
+sudo mysql -u root <<EOF
+ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '${MYSQL_ROOT_PASSWORD}';
+FLUSH PRIVILEGES;
+EOF
