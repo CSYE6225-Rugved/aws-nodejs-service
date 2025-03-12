@@ -10,6 +10,16 @@ echo "Creating group and user..."
 sudo groupadd -r csye6225
 sudo useradd -r -s /usr/sbin/nologin -g csye6225 csye6225
 
+echo "Updating MySQL root password..."
+export MYSQL_PWD=""
+sudo mysql --user=root --password=""<<EOF
+ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '${MYSQL_ROOT_PASSWORD}';
+FLUSH PRIVILEGES;
+EOF
+
+echo "Restarting MySQL..."
+sudo systemctl restart mysql
+
 echo "Setting up application directory..."
 sudo mkdir -p /opt/webapp
 sudo cp /tmp/webapp.zip /opt/
@@ -29,9 +39,3 @@ sudo cp /tmp/webapp.service /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable webapp
 sudo systemctl start webapp
-
-echo "Updating MySQL user password and authentication method..."
-sudo mysql -u root <<EOF
-ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '${MYSQL_ROOT_PASSWORD}';
-FLUSH PRIVILEGES;
-EOF

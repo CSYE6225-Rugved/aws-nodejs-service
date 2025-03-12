@@ -12,12 +12,17 @@ jobs:
     
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Setup Packer
         uses: hashicorp/setup-packer@main
         with:
           version: "latest"
+
+      - name: Create `webapp.zip`
+        run: |
+          zip -r webapp.zip .
+        shell: bash
 
       - name: Initialize Packer
         id: init
@@ -29,4 +34,5 @@ jobs:
 
       - name: Validate Packer Template
         id: validate
-        run:  packer validate aws-ubuntu.pkr.hcl
+        run: packer validate -var "mysql_root_password=${{ secrets.MYSQL_USER_PASSWORD }}" aws-ubuntu.pkr.hcl
+        shell: bash
