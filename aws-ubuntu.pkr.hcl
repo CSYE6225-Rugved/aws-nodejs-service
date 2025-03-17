@@ -23,6 +23,11 @@ variable "gcp_zone" {
   default = "us-central1-a"
 }
 
+variable "mysql_root_password" {
+  type    = string
+  default = ""
+}
+
 packer {
   required_plugins {
     amazon = {
@@ -64,7 +69,6 @@ source "googlecompute" "gcp_ubuntu" {
   tags = ["packer-image"]
 }
 
-
 build {
   name = "learn-packer"
   sources = [
@@ -73,6 +77,23 @@ build {
   ]
 
   provisioner "shell" {
-    script = "packer_image/mysql_packer.sh"
+    script = "mysql_packer.sh"
+  }
+
+  provisioner "file" {
+    source      = "webapp.zip"
+    destination = "/tmp/webapp.zip"
+  }
+  provisioner "file" {
+    source      = ".env"
+    destination = "/tmp/.env"
+  }
+  provisioner "file" {
+    source      = "webapp.service"
+    destination = "/tmp/webapp.service"
+  }
+
+  provisioner "shell" {
+    script           = "init-app.sh"
   }
 }
