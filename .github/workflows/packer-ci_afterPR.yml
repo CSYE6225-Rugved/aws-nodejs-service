@@ -14,23 +14,23 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # - name: Start MySQL Service
-      #   run: |
-      #     echo "Starting MySQL..."
-      #     sudo systemctl start mysql
-      #     sudo systemctl status mysql || true
-      #     mysql --version
+      - name: Start MySQL Service
+        run: |
+          echo "Starting MySQL..."
+          sudo systemctl start mysql
+          sudo systemctl status mysql || true
+          mysql --version
 
-      # - name: Set Up MySQL Database and User
-      #   run: |
-      #     echo "Restarting MySQL..."
-      #     sudo systemctl restart mysql
+      - name: Set Up MySQL Database and User
+        run: |
+          echo "Restarting MySQL..."
+          sudo systemctl restart mysql
 
-      #     echo "Creating database and user..."
-      #     mysql --user=${{ secrets.MYSQL_USER }} --password=${{ secrets.MYSQL_PASSWORD }} -e "CREATE DATABASE IF NOT EXISTS \`${{ secrets.MYSQL_DATABASE }}\`;"
-      #     mysql --user=${{ secrets.MYSQL_USER }} --password=${{ secrets.MYSQL_PASSWORD }} -e "CREATE USER '${{ secrets.MYSQL_USER }}'@'%' IDENTIFIED BY '${{ secrets.MYSQL_PASSWORD }}';"
-      #     mysql --user=${{ secrets.MYSQL_USER }} --password=${{ secrets.MYSQL_PASSWORD }} -e "GRANT ALL PRIVILEGES ON \`${{ secrets.MYSQL_DATABASE }}\`.* TO '${{ secrets.MYSQL_USER }}'@'%';"
-      #     mysql --user=${{ secrets.MYSQL_USER }} --password=${{ secrets.MYSQL_PASSWORD }} -e "FLUSH PRIVILEGES;"
+          echo "Creating database and user..."
+          mysql --user=${{ secrets.MYSQL_USER }} --password=${{ secrets.MYSQL_PASSWORD }} -e "CREATE DATABASE IF NOT EXISTS \`${{ secrets.MYSQL_DATABASE }}\`;"
+          mysql --user=${{ secrets.MYSQL_USER }} --password=${{ secrets.MYSQL_PASSWORD }} -e "CREATE USER '${{ secrets.MYSQL_USER }}'@'%' IDENTIFIED BY '${{ secrets.MYSQL_PASSWORD }}';"
+          mysql --user=${{ secrets.MYSQL_USER }} --password=${{ secrets.MYSQL_PASSWORD }} -e "GRANT ALL PRIVILEGES ON \`${{ secrets.MYSQL_DATABASE }}\`.* TO '${{ secrets.MYSQL_USER }}'@'%';"
+          mysql --user=${{ secrets.MYSQL_USER }} --password=${{ secrets.MYSQL_PASSWORD }} -e "FLUSH PRIVILEGES;"
 
       - name: Set Up Node.js
         uses: actions/setup-node@v4
@@ -88,10 +88,10 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      # - name: Set up GCP CLI
-      #   uses: google-github-actions/auth@v1
-      #   with:
-      #     credentials_json: ${{ secrets.GCP_SA_KEY }}
+      - name: Set up GCP CLI
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
 
       - name: Create and populate .env
         env:
@@ -101,8 +101,6 @@ jobs:
           DB_PASSWORD: ${{ secrets.MYSQL_USER_PASSWORD }}
           DB_NAME: ${{ secrets.MYSQL_DATABASE }}
           DB_DIALECT: ${{ secrets.DB_DIALECT }}
-          AWS_S3_BUCKET_NAME: ${{ secrets.AWS_S3_BUCKET_NAME }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
         run: |
           touch .env
           echo PORT="$PORT" >> .env
@@ -111,8 +109,6 @@ jobs:
           echo DB_PASSWORD="$DB_PASSWORD" >> .env
           echo DB_NAME="$DB_NAME" >> .env
           echo DB_DIALECT="$DB_DIALECT" >> .env
-          echo AWS_S3_BUCKET_NAME="$AWS_S3_BUCKET_NAME" >> .env
-          echo AWS_REGION="$AWS_REGION" >> .env
         shell: bash
 
       - name: Create webapp.zip from existing directory
