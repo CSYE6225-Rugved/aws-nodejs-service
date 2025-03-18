@@ -1,4 +1,4 @@
-# webapp  
+# webapp
 ## Prerequsites
 1. Node.js (v16 or higher)
 2. MySQL (v8.0 or higher)
