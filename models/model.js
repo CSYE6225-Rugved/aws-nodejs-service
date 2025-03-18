@@ -1,5 +1,6 @@
-const { DataTypes } = require("sequelize");
+const { Sequelize, DataTypes } = require("sequelize");
 const sequelize = require("../config/config");
+
 const HealthCheck = sequelize.define(
     "HealthCheck",
     {
@@ -18,15 +19,34 @@ const HealthCheck = sequelize.define(
     }
 );
 
-
-// // Bootstrapping Database
-// (async () => {
-//     try {
-//         await sequelize.sync();
-//         console.log("HealthCheck table Synced Successfully");
-//     } catch (error) {
-//         console.error("Error syncing the HealthCheck table:", error);
-//     }
-// })();
-
-module.exports = HealthCheck;
+const File = sequelize.define(
+    "File",
+    {
+        id: {
+            type: DataTypes.UUID,
+            defaultValue: Sequelize.UUIDV4,
+            primaryKey: true,
+        },
+        file_name: {
+            type: DataTypes.STRING,
+            allowNull: false,
+        },
+        s3_key: {
+            type: DataTypes.STRING,
+            allowNull: false,
+        },
+        s3_url: {
+            type: DataTypes.STRING,
+            allowNull: false,
+        },
+        upload_date: {
+            type: DataTypes.DATEONLY,
+            defaultValue: DataTypes.NOW,
+        },
+    },
+    {
+        timestamps: false,
+        tableName: "files",
+    }
+);
+module.exports = {HealthCheck, File};

@@ -5,13 +5,11 @@ sudo apt-get install -y unzip
 sudo apt-get install -y nodejs
 sudo apt-get install -y npm
 echo "Setting up the application in the custom image..."
-echo "Creating group and user..."
 
+echo "Creating group and user..."
 sudo groupadd -r csye6225
 sudo useradd -r -s /usr/sbin/nologin -g csye6225 csye6225
 
-echo "Restarting MySQL..."
-sudo systemctl restart mysql
 
 echo "Setting up application directory..."
 sudo mkdir -p /opt/webapp

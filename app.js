@@ -37,9 +37,9 @@ app.use((req,res) => {
 (async () => {
     try {
         await sequelize.sync();
-        console.log("HealthCheck table Synced Successfully");
+        console.log("Database Synced Successfully");
     } catch (error) {
-        console.error("Error syncing the HealthCheck table:", error);
+        console.error("Error syncing Database:", error);
     }
 })();
 

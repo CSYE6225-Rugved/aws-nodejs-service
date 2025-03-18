@@ -2,6 +2,7 @@ name: Deploy WebApp to AWS and GCP
 
 on:
   pull_request:
+    types: [closed]
     branches:
       - main
 
@@ -83,10 +84,10 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Set up GCP CLI
-        uses: google-github-actions/auth@v1
-        with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
+      # - name: Set up GCP CLI
+      #   uses: google-github-actions/auth@v1
+      #   with:
+      #     credentials_json: ${{ secrets.GCP_SA_KEY }}
 
       - name: Create and populate .env
         env:
