@@ -24,6 +24,13 @@ jobs:
           zip -r webapp.zip .
         shell: bash
 
+      - name: Create .env file
+        run: |
+          echo "DB_NAME=${{ secrets.MYSQL_DATABASE }}" > .env
+          echo "DB_USER=${{ secrets.MYSQL_USER }}" >> .env
+          echo "DB_PASSWORD=${{ secrets.MYSQL_PASSWORD }}" >> .env
+          echo "DB_HOST=${{ secrets.DB_HOST }}" >> .env
+          echo "DB_DIALECT=${{ secrets.DB_DIALECT }}" >> .env  
       - name: Initialize Packer
         id: init
         run: packer init .
@@ -34,5 +41,5 @@ jobs:
 
       - name: Validate Packer Template
         id: validate
-        run: packer validate -var "mysql_root_password=${{ secrets.MYSQL_USER_PASSWORD }}" aws-ubuntu.pkr.hcl
+        run: packer validate aws-ubuntu.pkr.hcl
         shell: bash
