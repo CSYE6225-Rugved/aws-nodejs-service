@@ -41,7 +41,7 @@ jobs:
       - name: Install Dependencies
         run: |
           npm ci
-          npm install dotenv --save
+          npm install multer multer-s3 dotenv --save
 
       - name: Run API Tests
         env:

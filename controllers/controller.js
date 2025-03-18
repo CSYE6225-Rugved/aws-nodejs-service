@@ -1,4 +1,4 @@
-const HealthCheck = require("../models/model");
+const HealthCheck = require("../models/model.js").HealthCheck;
 
 // Health check logic
 exports.healthCheck = async (req, res) => {
