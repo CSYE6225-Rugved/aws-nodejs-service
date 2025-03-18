@@ -34,5 +34,5 @@ jobs:
 
       - name: Validate Packer Template
         id: validate
-        run: packer validate -var "mysql_root_password=${{ secrets.MYSQL_USER_PASSWORD }}" aws-ubuntu.pkr.hcl
+        run: packer validate aws-ubuntu.pkr.hcl
         shell: bash
