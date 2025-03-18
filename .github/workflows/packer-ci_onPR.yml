@@ -36,3 +36,11 @@ jobs:
         id: validate
         run: packer validate aws-ubuntu.pkr.hcl
         shell: bash
+        env:
+          DB_NAME: ${{ secrets.MYSQL_DATABASE }}
+          DB_USER: ${{ secrets.MYSQL_USER }}
+          DB_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_DIALECT: ${{ secrets.DB_DIALECT }}
+          AWS_S3_BUCKET_NAME: ${{ secrets.AWS_S3_BUCKET_NAME }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
