@@ -47,7 +47,7 @@ build {
   ]
   provisioner "file" {
     source      = "webapp.zip"
-    destination = "/tmp/webapp.zip
+    destination = "/tmp/webapp.zip"
   }
   provisioner "file" {
     source      = ".env"
