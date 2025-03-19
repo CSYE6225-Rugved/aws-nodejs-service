@@ -7,12 +7,6 @@ require("dotenv").config();
 //AWS S3 configuratrion 
 const s3 = new S3Client({
     region: process.env.AWS_REGION,
-    credentials: process.env.AWS_ACCESS_KEY_ID
-        ? {
-              accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-              secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-          }
-        : undefined, // Use IAM Role on EC2 or AWS Profile locally
 });
 
 //Multer configuration for file upload

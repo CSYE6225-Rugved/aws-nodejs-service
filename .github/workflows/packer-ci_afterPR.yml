@@ -50,6 +50,8 @@ jobs:
           echo "DB_PASSWORD=${{ secrets.MYSQL_PASSWORD }}" >> .env
           echo "DB_HOST=${{ secrets.DB_HOST }}" >> .env
           echo "DB_DIALECT=${{ secrets.DB_DIALECT }}" >> .env
+          echo "DB_PORT=${{ secrets.DB_PORT }}" >> .env
+          echo PORT: ${{ secrets.PORT }} >> .env
           echo AWS_S3_BUCKET_NAME: ${{ secrets.AWS_S3_BUCKET_NAME }} >> .env
           echo AWS_REGION: ${{ secrets.AWS_REGION }} >> .env
 
@@ -60,6 +62,8 @@ jobs:
           DB_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
           DB_HOST: ${{ secrets.DB_HOST }}
           DB_DIALECT: ${{ secrets.DB_DIALECT }}
+          DB_PORT: ${{ secrets.DB_PORT }}
+          PORT: ${{ secrets.PORT }}
           AWS_S3_BUCKET_NAME: ${{ secrets.AWS_S3_BUCKET_NAME }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
         run: NODE_ENV=test npm test
@@ -101,6 +105,7 @@ jobs:
           DB_PASSWORD: ${{ secrets.MYSQL_USER_PASSWORD }}
           DB_NAME: ${{ secrets.MYSQL_DATABASE }}
           DB_DIALECT: ${{ secrets.DB_DIALECT }}
+          DB_PORT: ${{ secrets.DB_PORT }}
         run: |
           touch .env
           echo PORT="$PORT" >> .env
@@ -109,6 +114,7 @@ jobs:
           echo DB_PASSWORD="$DB_PASSWORD" >> .env
           echo DB_NAME="$DB_NAME" >> .env
           echo DB_DIALECT="$DB_DIALECT" >> .env
+          echo DB_PORT="$DB_PORT" >> .env
         shell: bash
 
       - name: Create webapp.zip from existing directory

@@ -13,30 +13,12 @@ variable "aws_instance_type" {
   default = "t2.micro"
 }
 
-variable "gcp_project_id" {
-  type    = string
-  default = "devproject-452005"
-}
-
-variable "gcp_zone" {
-  type    = string
-  default = "us-central1-a"
-}
-
-variable "mysql_root_password" {
-  type    = string
-  default = ""
-}
 
 packer {
   required_plugins {
     amazon = {
       version = ">= 1.2.8"
       source  = "github.com/hashicorp/amazon"
-    }
-    googlecompute = {
-      version = ">= 1.0.0"
-      source  = "github.com/hashicorp/googlecompute"
     }
   }
 }
@@ -58,22 +40,10 @@ source "amazon-ebs" "ubuntu" {
   ssh_username = var.ssh_username
 }
 
-source "googlecompute" "gcp_ubuntu" {
-  project_id   = var.gcp_project_id
-  image_name   = "rugved-${formatdate("20060102-150405", timestamp())}-${uuidv4()}"
-  source_image = "ubuntu-2204-jammy-v20250219"
-  zone         = var.gcp_zone
-  machine_type = "e2-medium"
-  ssh_username = var.ssh_username
-
-  tags = ["packer-image"]
-}
-
 build {
   name = "learn-packer"
   sources = [
     "source.amazon-ebs.ubuntu",
-    "source.googlecompute.gcp_ubuntu"
   ]
   provisioner "file" {
     source      = "webapp.zip"
