@@ -92,29 +92,9 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Set up GCP CLI
-        uses: google-github-actions/auth@v1
-        with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
-
       - name: Create and populate .env
-        env:
-          PORT: ${{ secrets.PORT }}
-          DB_HOST: ${{ secrets.DB_HOST }}
-          DB_USER: ${{ secrets.MYSQL_USER }}
-          DB_PASSWORD: ${{ secrets.MYSQL_USER_PASSWORD }}
-          DB_NAME: ${{ secrets.MYSQL_DATABASE }}
-          DB_DIALECT: ${{ secrets.DB_DIALECT }}
-          DB_PORT: ${{ secrets.DB_PORT }}
         run: |
           touch .env
-          echo PORT="$PORT" >> .env
-          echo DB_HOST="$DB_HOST" >> .env
-          echo DB_USER="$DB_USER" >> .env
-          echo DB_PASSWORD="$DB_PASSWORD" >> .env
-          echo DB_NAME="$DB_NAME" >> .env
-          echo DB_DIALECT="$DB_DIALECT" >> .env
-          echo DB_PORT="$DB_PORT" >> .env
         shell: bash
 
       - name: Create webapp.zip from existing directory
