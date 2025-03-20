@@ -1,5 +1,12 @@
 #!/bin/bash
 
+sudo apt-get remove nodejs
+sudo apt-get remove libnode72 -y
+sudo apt-get install -f
+
+# Add the NodeSource PPA (for the latest stable version)
+curl -fsSL https://deb.nodesource.com/setup_16.x | sudo -E bash -
+
 sudo apt-get update
 sudo apt-get install -y unzip
 sudo apt-get install -y nodejs
