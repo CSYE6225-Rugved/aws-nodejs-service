@@ -14,8 +14,8 @@ router.all("/v1/file", healthController.handleUnsupportedMethods);
 
 router.head("/v1/file/:id", healthController.handleUnsupportedMethods);
 router.get("/v1/file/:id", fileController.getFile);
-router.all("/v1/file/:id", healthController.handleUnsupportedMethods);
 
 router.delete("/v1/file/:id", fileController.deleteFile);
+router.all("/v1/file/:id", healthController.handleUnsupportedMethods);
 
 module.exports = router;

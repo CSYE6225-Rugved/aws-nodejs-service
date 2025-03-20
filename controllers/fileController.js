@@ -37,24 +37,29 @@ const uploadFile = async (req, res) => {
         const newFile = await File.create({
             file_name: req.file.originalname,
             s3_key: req.file.key,
-            s3_url: `https://${process.env.AWS_S3_BUCKET_NAME}.s3.amazonaws.com/${req.file.key}`,
+            s3_url: `${process.env.AWS_S3_BUCKET_NAME}`,
+            upload_date: new Date().toISOString().split("T")[0],
         });
 
         res.status(201).json({
             id: newFile.id,
             file_name: newFile.file_name,
-            s3_url: newFile.s3_url,
+            url: `${newFile.s3_url}/${newFile.id}/${newFile.file_name}`,
             upload_date: newFile.upload_date,
         });
     } catch (error) {
         console.error("File upload error:", error);
-        res.status(500).json({ error: "Internal Server Error", details: error.message });
+        res.status(503).json();;
     }
 };
 
 // Get File API
 const getFile = async (req, res) => {
     try {
+        if (Object.keys(req.body).length > 0) {
+            console.error("Body not allowed in GET request");
+            return res.status(400).json();
+        }
         const file = await File.findByPk(req.params.id);
         if (!file) {
             return res.status(404).json({ error: "File not found" });
@@ -63,12 +68,12 @@ const getFile = async (req, res) => {
         res.status(200).json({
             id: file.id,
             file_name: file.file_name,
-            s3_url: file.s3_url,
+            url: `${file.s3_url}/${file.id}/${file.file_name}`,
             upload_date: file.upload_date,
         });
     } catch (error) {
         console.error("File retrieval error:", error);
-        res.status(500).json({ error: "Internal Server Error" });
+        res.status(503).json();
     }
 };
 
@@ -93,7 +98,7 @@ const deleteFile = async (req, res) => {
         res.status(204).send();
     } catch (error) {
         console.error(" File deletion error:", error);
-        res.status(500).json({ error: "Internal Server Error" });
+        res.status(503).json();;
     }
 };
 
