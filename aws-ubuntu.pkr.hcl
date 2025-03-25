@@ -46,7 +46,7 @@ build {
     "source.amazon-ebs.ubuntu",
   ]
   provisioner "shell" {
-    script = "install-script.js"
+    script = "install-script.sh"
   }
   provisioner "file" {
     source      = "webapp.zip"
