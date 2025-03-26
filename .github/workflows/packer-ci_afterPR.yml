@@ -1,7 +1,8 @@
-name: Deploy WebApp to AWS and GCP
+name: Deploy WebApp to AWS
 
 on:
   pull_request:
+    types: [closed]
     branches:
       - main
 
