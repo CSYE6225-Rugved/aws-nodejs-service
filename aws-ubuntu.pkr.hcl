@@ -45,6 +45,9 @@ build {
   sources = [
     "source.amazon-ebs.ubuntu",
   ]
+  provisioner "shell" {
+    script = "install-script.sh"
+  }
   provisioner "file" {
     source      = "webapp.zip"
     destination = "/tmp/webapp.zip"
@@ -57,7 +60,10 @@ build {
     source      = "webapp.service"
     destination = "/tmp/webapp.service"
   }
-
+  provisioner "file" {
+    source      = "cloudwatch_config.json"
+    destination = "/tmp/cloudwatch_config.json"
+  }
   provisioner "shell" {
     script = "init-app.sh"
   }
