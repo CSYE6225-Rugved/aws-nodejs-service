@@ -119,6 +119,7 @@ jobs:
             --filters "Name=state,Values=available" \
             --query "Images | sort_by(@, &CreationDate)[-1].ImageId" \
             --output text)
+          echo "AMI ID: $AMI_ID" >> $GITHUB_ENV
 
           if [ -n "$AMI_ID" ]; then
             echo "Sharing AMI $AMI_ID with AWS DEMO account..."
@@ -128,3 +129,51 @@ jobs:
             echo "AMI not found, exiting."
             exit 1
           fi
+
+      #steps 1: configure Demo account AWS credentials
+      - name: Reconfigure github runner to demo account
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.DEMO_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.DEMO_AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+      
+      #steps 2: create a new launch template version
+      - name: Create new launch template
+        run: |
+              AMI_ID=${{ env.AMI_ID }}
+              echo "Creating new launch template version with AMI ID: $AMI_ID"
+              aws ec2 create-launch-template-version --launch-template-id ${{secrets.LAUNCH_TEMPLATE_ID}} --version-description "New version with latest AMI" --source-version 1 --launch-template-data "ImageId=$AMI_ID"
+
+      # Step 3: Start Instance Refresh for Auto Scaling Group
+      - name: Start Instance Refresh
+        id: start_refresh
+        run: |
+          REFRESH_ID=$(aws autoscaling start-instance-refresh \
+              --auto-scaling-group-name ${{ secrets.AUTO_SCALING_GROUP_NAME }} \
+              --query "InstanceRefreshId" \
+              --output text \
+              --no-cli-pager)
+          echo "Instance Refresh started with ID: $REFRESH_ID"
+          echo "INSTANCE_REFRESH_ID=$REFRESH_ID" >> $GITHUB_ENV
+
+      # Step 4: Wait for Instance Refresh to Complete
+      - name: Wait for Instance Refresh Completion
+        run: |
+          echo "Waiting for instance refresh to complete..."
+          while true; do
+            STATUS=$(aws autoscaling describe-instance-refreshes \
+                --auto-scaling-group-name ${{ secrets.AUTO_SCALING_GROUP_NAME }} \
+                --query "InstanceRefreshes[?InstanceRefreshId=='${{ env.INSTANCE_REFRESH_ID }}'].Status" \
+                --output text \
+                --no-cli-pager)
+            echo "Current status: $STATUS"
+            if [[ "$STATUS" == "Successful" ]]; then
+              echo "Instance Refresh completed successfully."
+              break
+            elif [[ "$STATUS" == "Failed" || "$STATUS" == "Cancelled" ]]; then
+              echo "Instance Refresh failed or was cancelled. Exiting."
+              exit 1
+            fi
+            sleep 30
+          done
