@@ -119,7 +119,9 @@ jobs:
             --filters "Name=state,Values=available" \
             --query "Images | sort_by(@, &CreationDate)[-1].ImageId" \
             --output text)
-          echo "AMI ID: $AMI_ID" >> $GITHUB_ENV
+          echo "AMI ID: $AMI_ID"
+          echo "AMI ID: $AMI_ID"
+          echo "AMI_ID=$AMI_ID" >> $GITHUB_ENV
 
           if [ -n "$AMI_ID" ]; then
             echo "Sharing AMI $AMI_ID with AWS DEMO account..."
