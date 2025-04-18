@@ -8,6 +8,10 @@ router.head("/healthz", healthController.handleUnsupportedMethods);
 router.get("/healthz", healthController.healthCheck);
 router.all("/healthz", healthController.handleUnsupportedMethods);
 
+router.head("/cicd", healthController.handleUnsupportedMethods);
+router.get("/cicd", healthController.healthCheck);
+router.all("/cicd", healthController.handleUnsupportedMethods);
+
 router.head("/v1/file", healthController.handleUnsupportedMethods);
 router.post("/v1/file", fileController.upload.single('file'), fileController.uploadFile);
 router.all("/v1/file", healthController.handleUnsupportedMethods);
