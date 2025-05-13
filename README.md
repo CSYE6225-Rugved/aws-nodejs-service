@@ -38,7 +38,7 @@ node app.js
 ```sh
 NODE_ENV=test npm test
 ```
-###To create and AMI from packer template
+### To create and AMI from packer template
 Install Packer and run below commands
 ```sh
 packer init .
