@@ -7,7 +7,7 @@
 
 ### 1. Clone the Repository
 ```sh
-git clone git@github.com:CSYE6225-Rugved/webapp.git
+git clone git@github.com:CSYE6225-Rugved/aws-nodejs-service.git
 cd webapp
 ```
 ### 2. Install Dependencies
